@@ -1,0 +1,7 @@
+Makefile.config
+*.o
+*/*.o
+tests/
+html/
+CROSS_COMPILER_MIPS_LINUX.tar.bz2
+CROSS_COMPILER_MIPS_LINUX/
