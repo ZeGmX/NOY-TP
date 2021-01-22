@@ -6,66 +6,65 @@
 //  See copyright_insa.h for copyright notice and limitation
 //  of liability and disclaimer of warranty provisions.
 */
-
 // Nachos system calls
 #include "userlib/libnachos.h"
-
-int
-main()
+int main()
 {
-    ThreadId newProc;
-    OpenFileId input = CONSOLE_INPUT;
-    OpenFileId output = CONSOLE_OUTPUT;
-    char prompt[2], buffer[60];
-    int i,bg;
+	ThreadId newProc;
+	OpenFileId input = CONSOLE_INPUT;
+	OpenFileId output = CONSOLE_OUTPUT;
+	char prompt[2], buffer[60];
+	int i, bg;
+	prompt[0] = '-';
+	prompt[1] = '>';
+	// Welcome message
+	n_printf("Welcome to NachOS\n");
+	while (1)
+	{
+		// Write the prompt
+		Write(prompt, 2, output);
+		// Wait for a command
+		Read(buffer, 60, input);
+		i = 0;
+		bg = 0;
+		while (buffer[i++] != '\n')
+		{
+		};
+		buffer[--i] = ' ';
 
-    prompt[0] = '-';
-    prompt[1] = '>';
+		while (buffer[--i] == ' ')
+		{
+		};
 
-    // Welcome message
-    n_printf("Welcome to NachOS\n");
-
-    while( 1 )
-    {
-
-      // Write the prompt
-      Write(prompt, 2, output);
-
-      // Wait for a command
-      Read(buffer, 60, input);
-
-	i=0;
-	bg=0;
-	while(buffer[i++] != '\n' ) {};
-	buffer[--i]=' ';
-
-
-
-	while(buffer[--i] == ' ') {};
-
-
-	// Background execution
-	if (buffer[i]=='&') {
-	    bg=1;
-	    buffer[i]=' ';
-	    while(buffer[--i] == ' ') {};
-	    buffer[++i]='\0';
-
-	} else {buffer[++i] = '\0';}
-
-	if (n_strcmp(buffer,"exit")==0) {
-	    break;
-	  }
-
-	// Execute the command
-	// In the case it is a background command, don't wait for its completion
-	if( i > 0 ) {
-	  newProc = Exec(buffer);
-	  if (newProc == -1) {
-	    n_printf("\nUnable to run %s\n", buffer);
-	  }
-	  else if (!bg) Join(newProc);
-
+		// Background execution
+		if (buffer[i] == '&')
+		{
+			bg = 1;
+			buffer[i] = ' ';
+			while (buffer[--i] == ' ')
+			{
+			};
+			buffer[++i] = '\0';
+		}
+		else
+		{
+			buffer[++i] = '\0';
+		}
+		if (n_strcmp(buffer, "exit") == 0)
+		{
+			break;
+		}
+		// Execute the command
+		// In the case it is a background command, don't wait for its completion
+		if (i > 0)
+		{
+			newProc = Exec(buffer);
+			if (newProc == -1)
+			{
+				n_printf("\nUnable to run %s\n", buffer);
+			}
+			else if (!bg)
+				Join(newProc);
+		}
 	}
-    }
 }

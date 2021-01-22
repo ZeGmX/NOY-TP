@@ -6,14 +6,10 @@
 //  See copyright_insa.h for copyright notice and limitation
 //  of liability and disclaimer of warranty provisions.
  */
-
 #include "userlib/syscall.h"
 #include "userlib/libnachos.h"
-
-int
-main()
+int main()
 {
   n_printf("** ** ** Bonjour le monde ** ** **\n");
-
   return 0;
 }

@@ -10,11 +10,9 @@
 //  See copyright_insa.h for copyright notice and limitation
 //  of liability and disclaimer of warranty provisions.
  */
-
 #include "libnachos.h"
 #include <stdarg.h>
 #include <stdint.h>
-
 //----------------------------------------------------------------------
 // threadStart()
 /*!	Makes a thread execute a function or program. This function
@@ -28,17 +26,15 @@
 //	\param func is the identificator of the function to execute.
 */
 //----------------------------------------------------------------------
-
 static void threadStart(int func)
 {
-    VoidNoArgFunctionPtr func2;
-    func2=(VoidNoArgFunctionPtr)func;
-    // Call the function that actually contains the thread code
-    func2();
-    // Call exit, such that there is no return using an empty stack
-    Exit(0);
+	VoidNoArgFunctionPtr func2;
+	func2 = (VoidNoArgFunctionPtr)func;
+	// Call the function that actually contains the thread code
+	func2();
+	// Call exit, such that there is no return using an empty stack
+	Exit(0);
 }
-
 //----------------------------------------------------------------------
 // threadCreate()
 /*!	 Creates a thread and makes it execute a function.
@@ -53,11 +49,10 @@ static void threadStart(int func)
 //	\param func is the address of the function to execute.
 */
 //----------------------------------------------------------------------
-ThreadId threadCreate(char * debug_name, VoidNoArgFunctionPtr func)
+ThreadId threadCreate(char *debug_name, VoidNoArgFunctionPtr func)
 {
-    return newThread(debug_name, (int)threadStart,(int)func);
+	return newThread(debug_name, (int)threadStart, (int)func);
 }
-
 //----------------------------------------------------------------------
 // n_strcmp()
 /*!	String comparison
@@ -71,31 +66,30 @@ ThreadId threadCreate(char * debug_name, VoidNoArgFunctionPtr func)
 //----------------------------------------------------------------------
 int n_strcmp(const char *s1, const char *s2)
 {
-  int comparaison;
-  int fini=0;
-  int i=0;
-  while(!fini)
-    {
-      if((s1[i]==0)&&(s2[i]==0))
+	int comparaison;
+	int fini = 0;
+	int i = 0;
+	while (!fini)
 	{
-	  fini=1;
-	  comparaison=0;
+		if ((s1[i] == 0) && (s2[i] == 0))
+		{
+			fini = 1;
+			comparaison = 0;
+		}
+		if (s1[i] < s2[i])
+		{
+			fini = 1;
+			comparaison = -1;
+		}
+		if (s1[i] > s2[i])
+		{
+			fini = 1;
+			comparaison = 1;
+		}
+		i++;
 	}
-      if(s1[i]<s2[i])
-	{
-	  fini=1;
-	  comparaison=-1;
-	}
-      if(s1[i]>s2[i])
-	{
-	  fini=1;
-	  comparaison=1;
-	}
-      i++;
-    }
-  return comparaison;
+	return comparaison;
 }
-
 //----------------------------------------------------------------------
 // n_strcpy()
 /*!	String copy
@@ -107,19 +101,22 @@ int n_strcmp(const char *s1, const char *s2)
 //----------------------------------------------------------------------
 char *n_strcpy(char *dst, const char *src)
 {
-  int i=0;
-  int fini=0;
-  if((dst!=0)&&(src!=0)) {
-      while(fini==0) {
-	  if(src[i]=='\0') fini=1;
-	  dst[i]=src[i];
-	  i++;
+	int i = 0;
+	int fini = 0;
+	if ((dst != 0) && (src != 0))
+	{
+		while (fini == 0)
+		{
+			if (src[i] == '\0')
+				fini = 1;
+			dst[i] = src[i];
+			i++;
+		}
+		return dst;
 	}
-      return dst;
-    }
-  else return 0;
+	else
+		return 0;
 }
-
 
 //----------------------------------------------------------------------
 // n_strlen()
@@ -132,11 +129,11 @@ char *n_strcpy(char *dst, const char *src)
 //----------------------------------------------------------------------
 size_t n_strlen(const char *s)
 {
-  size_t i=0;
-  while (s[i] != 0) i++;
-  return i;
+	size_t i = 0;
+	while (s[i] != 0)
+		i++;
+	return i;
 }
-
 
 //----------------------------------------------------------------------
 // n_strcat()
@@ -152,15 +149,15 @@ size_t n_strlen(const char *s)
 //----------------------------------------------------------------------
 char *n_strcat(char *dst, const char *src)
 {
-  int i,j,k;
-  i=(int)n_strlen(dst);
-  j=(int)n_strlen(src);
-  for(k=i;k<=j+i;k++) {
-      dst[k]=src[k-i];
-  }
-  return dst;
+	int i, j, k;
+	i = (int)n_strlen(dst);
+	j = (int)n_strlen(src);
+	for (k = i; k <= j + i; k++)
+	{
+		dst[k] = src[k - i];
+	}
+	return dst;
 }
-
 
 //----------------------------------------------------------------------
 // n_toupper()
@@ -173,11 +170,11 @@ char *n_strcat(char *dst, const char *src)
 //----------------------------------------------------------------------
 int n_toupper(int c)
 {
-  if((c>='a')&&(c<='z'))
-	return c+('A'-'a');
-  else return c;
+	if ((c >= 'a') && (c <= 'z'))
+		return c + ('A' - 'a');
+	else
+		return c;
 }
-
 //----------------------------------------------------------------------
 // n_tolower()
 /*!	Gives the lower-case letter corresponding to the upper-case
@@ -189,11 +186,11 @@ int n_toupper(int c)
 //----------------------------------------------------------------------
 int n_tolower(int c)
 {
-  if((c<='Z')&&(c>='A'))
-	return c+('a'-'A');
-  else return c;
+	if ((c <= 'Z') && (c >= 'A'))
+		return c + ('a' - 'A');
+	else
+		return c;
 }
-
 //----------------------------------------------------------------------
 // n_atoi()
 /*!	String to integer conversion.
@@ -204,27 +201,31 @@ int n_tolower(int c)
 //----------------------------------------------------------------------
 int n_atoi(const char *str)
 {
-  int i=0;
-  int fini=0;
-  int val=0;
-  int negative = 0;
-  if (str[i] == '-') {
-    negative = 1; i=1;
-  }
-  while(!fini)
-    {
-      if(str[i]==0 || str[i]<'0' || str[i]>'9')
-	fini=1;
-      else
+	int i = 0;
+	int fini = 0;
+	int val = 0;
+	int negative = 0;
+	if (str[i] == '-')
 	{
-	  val*=10;
-	  val+=str[i]-'0';
-	  i++;
+		negative = 1;
+		i = 1;
 	}
-    }
-  if (negative) return(-val); else return val;
+	while (!fini)
+	{
+		if (str[i] == 0 || str[i] < '0' || str[i] > '9')
+			fini = 1;
+		else
+		{
+			val *= 10;
+			val += str[i] - '0';
+			i++;
+		}
+	}
+	if (negative)
+		return (-val);
+	else
+		return val;
 }
-
 //----------------------------------------------------------------------
 // n_memcmp()
 /*!	Memory comparison.
@@ -240,29 +241,27 @@ int n_atoi(const char *str)
 //----------------------------------------------------------------------
 int n_memcmp(const void *s1, const void *s2, size_t n)
 {
-  unsigned char* c1=(unsigned char*)s1;
-  unsigned char* c2=(unsigned char*)s2;
-
-  int comparaison=0;
-  int fini=0;
-  int i=0;
-  while((!fini)&&(i<n))
-    {
-      if(c1[i]<c2[i])
+	unsigned char *c1 = (unsigned char *)s1;
+	unsigned char *c2 = (unsigned char *)s2;
+	int comparaison = 0;
+	int fini = 0;
+	int i = 0;
+	while ((!fini) && (i < n))
 	{
-	  fini=1;
-	  comparaison=-1;
+		if (c1[i] < c2[i])
+		{
+			fini = 1;
+			comparaison = -1;
+		}
+		if (c1[i] > c2[i])
+		{
+			fini = 1;
+			comparaison = 1;
+		}
+		i++;
 	}
-      if(c1[i]>c2[i])
-	{
-	  fini=1;
-	  comparaison=1;
-	}
-      i++;
-    }
-  return comparaison;
+	return comparaison;
 }
-
 //----------------------------------------------------------------------
 // n_memcpy()
 /*!	Memory copy.
@@ -275,23 +274,21 @@ int n_memcmp(const void *s1, const void *s2, size_t n)
 //----------------------------------------------------------------------
 void *n_memcpy(void *s1, const void *s2, size_t n)
 {
-
-  unsigned char* c1=(unsigned char*)s1;
-  unsigned char* c2=(unsigned char*)s2;
-
-  int i=0;
-  if((c1!=0)&&(c2!=0))
-    {
-      while(i<n)
+	unsigned char *c1 = (unsigned char *)s1;
+	unsigned char *c2 = (unsigned char *)s2;
+	int i = 0;
+	if ((c1 != 0) && (c2 != 0))
 	{
-	  c1[i]=c2[i];
-	  i++;
+		while (i < n)
+		{
+			c1[i] = c2[i];
+			i++;
+		}
+		return (void *)c1;
 	}
-      return (void *)c1;
-    }
-  else return 0;
+	else
+		return 0;
 }
-
 
 //----------------------------------------------------------------------
 // n_memset()
@@ -306,13 +303,12 @@ void *n_memcpy(void *s1, const void *s2, size_t n)
 //----------------------------------------------------------------------
 void *n_memset(void *s, int c, size_t n)
 {
-  unsigned char* c1=(unsigned char*)s;
-  int i;
-  for(i=0;i<n;i++)
-    c1[i]=c;
-  return (void *)c1;
+	unsigned char *c1 = (unsigned char *)s;
+	int i;
+	for (i = 0; i < n; i++)
+		c1[i] = c;
+	return (void *)c1;
 }
-
 //----------------------------------------------------------------------
 // n_dumpmem()
 /*!	Dumps on the string the n first bytes of a memory area
@@ -325,32 +321,31 @@ void *n_memset(void *s, int c, size_t n)
 void n_dumpmem(char *addr, int len)
 {
 #define TOHEX(x) \
-  ({ char __x = (x); if(__x < 10) __x+='0'; else __x='a'+(__x-10) ; __x; })
-
-  int i;
-  for (i = 0 ; i < len ; i++)
-    {
-      char s[3];
-      if ((i%16) == 0)
-	n_printf("%x\t", (unsigned)&addr[i]);
-      else if ((i%8) == 0)
-	n_printf("   ");
-      s[0] = TOHEX((addr[i] >> 4) & 0xf);
-      s[1] = TOHEX(addr[i] & 0xf);
-      s[2] = '\0';
-      n_printf("%s ", s);
-      if ((((i+1)%16) == 0) || (i == len-1))
-	n_printf("\n");
-    }
+	({ char __x = (x); if(__x < 10) __x+='0'; else __x='a'+(__x-10) ; __x; })
+	int i;
+	for (i = 0; i < len; i++)
+	{
+		char s[3];
+		if ((i % 16) == 0)
+			n_printf("%x\t", (unsigned)&addr[i]);
+		else if ((i % 8) == 0)
+			n_printf("   ");
+		s[0] = TOHEX((addr[i] >> 4) & 0xf);
+		s[1] = TOHEX(addr[i] & 0xf);
+		s[2] = '\0';
+		n_printf("%s ", s);
+		if ((((i + 1) % 16) == 0) || (i == len - 1))
+			n_printf("\n");
+	}
 }
 
-
-#define PUTCHAR(carac) \
-  do { \
-    if (result < len-1) *buff++ = carac;\
-    result++; \
-  } while (0)
-
+#define PUTCHAR(carac)        \
+	do                        \
+	{                         \
+		if (result < len - 1) \
+			*buff++ = carac;  \
+		result++;             \
+	} while (0)
 //----------------------------------------------------------------------
 // n_vsnprintf()
 /*!	Build a string according to a specified format (internal function)
@@ -375,148 +370,135 @@ void n_dumpmem(char *addr, int len)
 //----------------------------------------------------------------------
 static int n_vsnprintf(char *buff, int len, const char *format, va_list ap)
 {
-  int i, result;
-
-  if (!buff || !format || (len < 0))
-    return -1;
-
-  result = 0;
-  for (i=0 ; format[i] != '\0' ; i++) {
-
-    switch (format[i])
-      {
-    case '%':
-      i++;
-      switch(format[i])
+	int i, result;
+	if (!buff || !format || (len < 0))
+		return -1;
+	result = 0;
+	for (i = 0; format[i] != '\0'; i++)
 	{
-	case '%':
-	  {
-	    PUTCHAR('%');
-	    break;
-	  }
-	case 'i':;
-	case 'd':
-	  {
-	    int integer = va_arg(ap,int);
-	    int cpt2 = 0;
-	    char buff_int[16];
-
-	    if (integer<0)
-	      PUTCHAR('-');
-
-	    do {
-	      int m10 = integer%10;
-	      m10 = (m10 < 0)? -m10:m10;
-	      buff_int[cpt2++]=(char)('0'+ m10);
-	      integer=integer/10;
-	    } while(integer!=0);
-
-	    for(cpt2 = cpt2 - 1 ; cpt2 >= 0 ; cpt2--)
-	      PUTCHAR(buff_int[cpt2]);
-
-	    break;
-	  }
-
-	case 'c':
-	  {
-	    int value = va_arg(ap,int);
-	    PUTCHAR((char)value);
-	    break;
-	  }
-
-	case 's':
-	  {
-	    char *string = va_arg(ap,char *);
-	    if (! string)
-	      string = "(null)";
-	    for( ; *string != '\0' ; string++)
-	      PUTCHAR(*string);
-	    break;
-	  }
-
-	case 'x':
-	  {
-	    uint32_t hexa = va_arg(ap,int);
-	    uint32_t nb;
-	    uint32_t i, had_nonzero = 0;
-	    for (i=0 ; i < 8 ; i++)
-	      {
-		nb = (hexa << (i*4));
-		nb = (nb >> 28);
-		nb = nb & 0x0000000f;
-		// Skip the leading zeros
-		if (nb == 0)
-		  {
-		    if (had_nonzero)
-		      PUTCHAR((uint8_t)'0');
-		  }
-		else
-		  {
-		    had_nonzero = 1;
-		    if (nb < 10)
-		      PUTCHAR((uint8_t)'0'+(uint8_t)nb);
-		    else
-		      PUTCHAR((uint8_t)'a'+(uint8_t)(nb-10));
-		  }
-	      }
-	    if (! had_nonzero)
-	      PUTCHAR((uint8_t)'0');
-	    break;
-	  }
-
-	case 'f':
-	  { // Very simple routine to print floats as xxxx.yyyyy
-	    // Not very good (unable to print large numbers)
-	    // If anyone wants to re-write it, feel free ...
-	    double f = (double) va_arg(ap,double);
-	    int cpt2, j;
-	    char buff_float[200];
-	    long ient,idec;
-
-	    if (f<0) {
-	      PUTCHAR('-');
-	      f = -f;
-	    }
-	    ient = (int)f;
-
-	    // 100000 = print 5 digits max
-	    idec = (int)((f - ((double)ient))*100000);
-
-	    // Round up
-	    if ( f - ((double)ient) - ((double)idec)/100000.0 >= 0.5E-5)
-	      idec ++;
-
-	    cpt2 = 0;
-	    // Print digits after the '.'
-	    for (j=0 ; j<5 ; j++) {
-	      buff_float[cpt2++]=(char)('0'+(idec%10));
-	      idec=idec/10;
-	    }
-	    buff_float[cpt2++] = '.';
-	    // Print digits before the '.'
-	    do {
-	      buff_float[cpt2++]=(char)('0'+ (ient%10));
-	      ient=ient/10;
-	    } while (ient!=0);
-	    for(j = cpt2 - 1 ; j >= 0 ; j--)
-	      PUTCHAR(buff_float[j]);
-	    break;
-	    }
-	  default:
-	    PUTCHAR('%');
-	    PUTCHAR(format[i]);
-	  }
-      break;
-
-      default:
-	PUTCHAR(format[i]);
-    }
-  }
-
-  *buff = '\0';
-  return result;
+		switch (format[i])
+		{
+		case '%':
+			i++;
+			switch (format[i])
+			{
+			case '%':
+			{
+				PUTCHAR('%');
+				break;
+			}
+			case 'i':;
+			case 'd':
+			{
+				int integer = va_arg(ap, int);
+				int cpt2 = 0;
+				char buff_int[16];
+				if (integer < 0)
+					PUTCHAR('-');
+				do
+				{
+					int m10 = integer % 10;
+					m10 = (m10 < 0) ? -m10 : m10;
+					buff_int[cpt2++] = (char)('0' + m10);
+					integer = integer / 10;
+				} while (integer != 0);
+				for (cpt2 = cpt2 - 1; cpt2 >= 0; cpt2--)
+					PUTCHAR(buff_int[cpt2]);
+				break;
+			}
+			case 'c':
+			{
+				int value = va_arg(ap, int);
+				PUTCHAR((char)value);
+				break;
+			}
+			case 's':
+			{
+				char *string = va_arg(ap, char *);
+				if (!string)
+					string = "(null)";
+				for (; *string != '\0'; string++)
+					PUTCHAR(*string);
+				break;
+			}
+			case 'x':
+			{
+				uint32_t hexa = va_arg(ap, int);
+				uint32_t nb;
+				uint32_t i, had_nonzero = 0;
+				for (i = 0; i < 8; i++)
+				{
+					nb = (hexa << (i * 4));
+					nb = (nb >> 28);
+					nb = nb & 0x0000000f;
+					// Skip the leading zeros
+					if (nb == 0)
+					{
+						if (had_nonzero)
+							PUTCHAR((uint8_t)'0');
+					}
+					else
+					{
+						had_nonzero = 1;
+						if (nb < 10)
+							PUTCHAR((uint8_t)'0' + (uint8_t)nb);
+						else
+							PUTCHAR((uint8_t)'a' + (uint8_t)(nb - 10));
+					}
+				}
+				if (!had_nonzero)
+					PUTCHAR((uint8_t)'0');
+				break;
+			}
+			case 'f':
+			{ // Very simple routine to print floats as xxxx.yyyyy
+				// Not very good (unable to print large numbers)
+				// If anyone wants to re-write it, feel free ...
+				double f = (double)va_arg(ap, double);
+				int cpt2, j;
+				char buff_float[200];
+				long ient, idec;
+				if (f < 0)
+				{
+					PUTCHAR('-');
+					f = -f;
+				}
+				ient = (int)f;
+				// 100000 = print 5 digits max
+				idec = (int)((f - ((double)ient)) * 100000);
+				// Round up
+				if (f - ((double)ient) - ((double)idec) / 100000.0 >= 0.5E-5)
+					idec++;
+				cpt2 = 0;
+				// Print digits after the '.'
+				for (j = 0; j < 5; j++)
+				{
+					buff_float[cpt2++] = (char)('0' + (idec % 10));
+					idec = idec / 10;
+				}
+				buff_float[cpt2++] = '.';
+				// Print digits before the '.'
+				do
+				{
+					buff_float[cpt2++] = (char)('0' + (ient % 10));
+					ient = ient / 10;
+				} while (ient != 0);
+				for (j = cpt2 - 1; j >= 0; j--)
+					PUTCHAR(buff_float[j]);
+				break;
+			}
+			default:
+				PUTCHAR('%');
+				PUTCHAR(format[i]);
+			}
+			break;
+		default:
+			PUTCHAR(format[i]);
+		}
+	}
+	*buff = '\0';
+	return result;
 }
-
 //----------------------------------------------------------------------
 // n_snprintf()
 /*!	Build a string according to a specified format
@@ -539,15 +521,14 @@ static int n_vsnprintf(char *buff, int len, const char *format, va_list ap)
 //        to the buffer if it were large enough. -1 on error.
 */
 //----------------------------------------------------------------------
-int n_snprintf(char * buff, int len, const char *format, ...){
-  va_list ap;
-  va_start(ap, format);
-  len = n_vsnprintf(buff, len, format, ap);
-  va_end(ap);
-
-  return len;
+int n_snprintf(char *buff, int len, const char *format, ...)
+{
+	va_list ap;
+	va_start(ap, format);
+	len = n_vsnprintf(buff, len, format, ap);
+	va_end(ap);
+	return len;
 }
-
 //----------------------------------------------------------------------
 // n_printf()
 /*!	Print to the standard output parameters.
@@ -563,28 +544,24 @@ int n_snprintf(char * buff, int len, const char *format, ...){
 //	\param type of print.
 */
 //----------------------------------------------------------------------
-
-void poupou(const char * format, ...) {
-  va_list ap;
-  va_start(ap, format);
+void poupou(const char *format, ...)
+{
+	va_list ap;
+	va_start(ap, format);
 }
-
-void n_printf(const char *format, ...){
-
-  va_list ap;
-  char buff[200];
-  int len;
-
-  va_start(ap, format);
-  len = n_vsnprintf(buff, sizeof(buff), format, ap);
-  va_end(ap);
-
-  if (len >= sizeof(buff))
-    len = sizeof(buff) - 1;
-  if (len > 0)
-  Write(buff,len,CONSOLE_OUTPUT);
+void n_printf(const char *format, ...)
+{
+	va_list ap;
+	char buff[200];
+	int len;
+	va_start(ap, format);
+	len = n_vsnprintf(buff, sizeof(buff), format, ap);
+	va_end(ap);
+	if (len >= sizeof(buff))
+		len = sizeof(buff) - 1;
+	if (len > 0)
+		Write(buff, len, CONSOLE_OUTPUT);
 }
-
 //----------------------------------------------------------------------
 // n_read_int()
 /*!
@@ -592,8 +569,9 @@ void n_printf(const char *format, ...){
 // checking...
 */
 //----------------------------------------------------------------------
-int n_read_int(void) {
-  char buff[200];
-  Read(buff,200,CONSOLE_INPUT);
-  return n_atoi(buff);
+int n_read_int(void)
+{
+	char buff[200];
+	Read(buff, 200, CONSOLE_INPUT);
+	return n_atoi(buff);
 }

@@ -9,16 +9,12 @@
  *  All rights reserved.  See copyright.h for copyright notice and limitation
  *  of liability and disclaimer of warranty provisions.
  */
-
 #define IN_ASM
 #include "userlib/syscall.h"
-
 	 // Equivalent to ".text", but with a different name, in order
 	 // to be correctly handled by the ldscript
         .section .sys,"ax",@progbits
-
         .align  2
-
 /* -------------------------------------------------------------
  * __start
  *	Initialize running a C program, by calling "main".
@@ -27,17 +23,14 @@
  *	The Nachos kernel always starts a program by jumping to location 0.
  * -------------------------------------------------------------
  */
-
 	.globl __start
 	.ent	__start
 __start:
-
 /* Call the program entry point */
 	jal	main
 	move	$4,$0
 	jal	Exit	 /* if we return from main, exit(0) */
 	.end __start
-
 /* -------------------------------------------------------------
  * System call stubs:
  *	Assembly language assist to make system calls to the Nachos kernel.
@@ -50,7 +43,6 @@ __start:
  * 	convention on the MIPS.
  * -------------------------------------------------------------
  */
-
 	.globl Halt
 	.ent	Halt
 Halt:
@@ -58,7 +50,6 @@ Halt:
 	syscall
 	j	$31
 	.end Halt
-
 	.globl Exit
 	.ent	Exit
 Exit:
@@ -66,7 +57,6 @@ Exit:
 	syscall
 	j	$31
 	.end Exit
-
 	.globl Exec
 	.ent	Exec
 Exec:
@@ -74,7 +64,6 @@ Exec:
 	syscall
 	j	$31
 	.end Exec
-
 	.globl Join
 	.ent	Join
 Join:
@@ -82,7 +71,6 @@ Join:
 	syscall
 	j	$31
 	.end Join
-
 	.globl Create
 	.ent	Create
 Create:
@@ -90,7 +78,6 @@ Create:
 	syscall
 	j	$31
 	.end Create
-
 	.globl Open
 	.ent	Open
 Open:
@@ -98,7 +85,6 @@ Open:
 	syscall
 	j	$31
 	.end Open
-
 	.globl Read
 	.ent	Read
 Read:
@@ -106,7 +92,6 @@ Read:
 	syscall
 	j	$31
 	.end Read
-
 	.globl Write
 	.ent	Write
 Write:
@@ -114,7 +99,6 @@ Write:
 	syscall
 	j	$31
 	.end Write
-
 	.globl Seek
 	.ent	Seek
 Seek:
@@ -122,7 +106,6 @@ Seek:
 	syscall
 	j	$31
 	.end Seek
-
 	.globl Close
 	.ent	Close
 Close:
@@ -130,7 +113,6 @@ Close:
 	syscall
 	j	$31
 	.end Close
-
 	.globl FSList
 	.ent	FSList
 FSList:
@@ -138,7 +120,6 @@ FSList:
 	syscall
 	j	$31
 	.end FSList
-
 	.globl newThread
 	.ent	newThread
 newThread:
@@ -146,7 +127,6 @@ newThread:
 	syscall
 	j	$31
 	.end newThread
-
 	.globl Remove
 	.ent	Remove
 Remove:
@@ -154,7 +134,6 @@ Remove:
 	syscall
 	j	$31
 	.end Remove
-
 	.globl Yield
 	.ent	Yield
 Yield:
@@ -162,7 +141,6 @@ Yield:
 	syscall
 	j	$31
 	.end Yield
-
 	.globl PError
 	.ent	PError
 PError:
@@ -171,7 +149,6 @@ PError:
 	j	$31
 	.end PError
 
-
 	.globl P
 	.ent	P
 P:
@@ -179,7 +156,6 @@ P:
 	syscall
 	j	$31
 	.end P
-
 	.globl V
 	.ent	V
 V:
@@ -187,7 +163,6 @@ V:
 	syscall
 	j	$31
 	.end V
-
 	.globl SemCreate
 	.ent	SemCreate
 SemCreate:
@@ -195,7 +170,6 @@ SemCreate:
 	syscall
 	j	$31
 	.end SemCreate
-
 	.globl SemDestroy
 	.ent	SemDestroy
 SemDestroy:
@@ -203,7 +177,6 @@ SemDestroy:
 	syscall
 	j	$31
 	.end SemDestroy
-
 	.globl SysTime
 	.ent	SysTime
 SysTime:
@@ -211,7 +184,6 @@ SysTime:
 	syscall
 	j	$31
 	.end SysTime
-
 	.globl LockCreate
 	.ent	LockCreate
 LockCreate:
@@ -219,7 +191,6 @@ LockCreate:
 	syscall
 	j	$31
 	.end LockCreate
-
 	.globl LockDestroy
 	.ent	LockDestroy
 LockDestroy:
@@ -227,7 +198,6 @@ LockDestroy:
 	syscall
 	j	$31
 	.end LockDestroy
-
 	.globl LockAcquire
 	.ent	LockAcquire
 LockAcquire:
@@ -235,7 +205,6 @@ LockAcquire:
 	syscall
 	j	$31
 	.end LockAcquire
-
 	.globl LockRelease
 	.ent	LockRelease
 LockRelease:
@@ -243,7 +212,6 @@ LockRelease:
 	syscall
 	j	$31
 	.end LockRelease
-
 	.globl CondCreate
 	.ent	CondCreate
 CondCreate:
@@ -251,7 +219,6 @@ CondCreate:
 	syscall
 	j	$31
 	.end CondCreate
-
 	.globl CondDestroy
 	.ent	CondDestroy
 CondDestroy:
@@ -260,7 +227,6 @@ CondDestroy:
 	j	$31
 	.end CondDestroy
 
-
 	.globl CondWait
 	.ent	CondWait
 CondWait:
@@ -268,7 +234,6 @@ CondWait:
 	syscall
 	j	$31
 	.end CondWait
-
 	.globl CondSignal
 	.ent	CondSignal
 CondSignal:
@@ -276,7 +241,6 @@ CondSignal:
 	syscall
 	j	$31
 	.end CondSignal
-
 	.globl CondBroadcast
 	.ent	CondBroadcast
 CondBroadcast:
@@ -284,7 +248,6 @@ CondBroadcast:
 	syscall
 	j	$31
 	.end CondBroadcast
-
 	.globl TtySend
 	.ent	TtySend
 TtySend:
@@ -292,7 +255,6 @@ TtySend:
 	syscall
 	j	$31
 	.end TtySend
-
 	.globl TtyReceive
 	.ent	TtyReceive
 TtyReceive:
@@ -300,21 +262,18 @@ TtyReceive:
 	syscall
 	j	$31
 	.end TtyReceive
-
 	.globl Mkdir
 	.ent	Mkdir
 Mkdir:	addiu $2,$0,SC_MKDIR
 	syscall
 	j	$31
 	.end Mkdir
-
 	.globl Rmdir
 	.ent	Rmdir
 Rmdir:	addiu $2,$0,SC_RMDIR
 	syscall
 	j	$31
 	.end Rmdir
-
 	.globl Mmap
 	.ent	Mmap
 Mmap:	addiu $2,$0,SC_MMAP

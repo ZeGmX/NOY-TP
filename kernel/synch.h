@@ -1,26 +1,20 @@
 /*! \file synch.h
     \brief Data structures for synchronizing threads.
-
   	Three kinds of synchronization are defined here: semaphores,
   	locks, and condition variables. Part or all of them are to be
   	implemented as part of the first assignment.
-
   	Note that all the synchronization objects take a "name" as
   	part of the initialization.  This is solely for debugging purposes.
-
    Copyright (c) 1992-1993 The Regents of the University of California.
    All rights reserved.  See copyright.h for copyright notice and limitation
    synch.h -- synchronization primitives.
 */
-
 #ifndef SYNCH_H
 #define SYNCH_H
-
 #include "kernel/copyright.h"
 #include "kernel/system.h"
 #include "kernel/thread.h"
 #include "utility/list.h"
-
 /*! \brief Defines the "semaphore" synchronization tool
 //
 // The semaphore has only two operations P() and V():
@@ -37,30 +31,25 @@
 // and some other thread might have called P or V, so the true value might
 // now be different.
 */
-class Semaphore {
+class Semaphore
+{
 public:
   //! Create and set initial value
-  Semaphore(char* debugName, int initialValue);
-
+  Semaphore(char *debugName, int initialValue);
   //! Delete semaphore
   ~Semaphore();
-
   //! debugging assist
-  char* getName() { return name;}
-
-  void P();	 // these are the only operations on a semaphore
-  void V();	 // they are both *atomic*
-
+  char *getName() { return name; }
+  void P(); // these are the only operations on a semaphore
+  void V(); // they are both *atomic*
 private:
-  char *name;      //!< useful for debugging
-  int value;       //!< semaphore value
-  Listint *queue;  //!< threads waiting in P() for the value to be > 0
-
+  char *name;     //!< useful for debugging
+  int value;      //!< semaphore value
+  Listint *queue; //!< threads waiting in P() for the value to be > 0
 public:
   //! Object type, for validity checks during system calls (must be the first public field)
   ObjectType type;
 };
-
 /*! \brief Defines the "lock" synchronization tool
 //
 // A lock can be BUSY or FREE.
@@ -75,38 +64,32 @@ public:
 // may release it.  As with semaphores, you can't read the lock value
 // (because the value might change immediately after you read it).
 */
-class Lock {
+class Lock
+{
 public:
   //! Lock creation
-  Lock(char* debugName);
-
+  Lock(char *debugName);
   //! Delete a lock
   ~Lock();
-
   //! For debugging
-  char* getName() { return name; }
-
+  char *getName() { return name; }
   //! Acquire a lock (atomic operation)
   void Acquire();
-
   //! Release a lock (atomic operation)
   void Release();
-
   //! true if the current thread holds this lock.  Useful for checking
   //! in Release, and in Condition variable operations below.
   bool isHeldByCurrentThread();
 
 private:
-  char* name;            //!< for debugging
-  Listint * sleepqueue;  //!< threads waiting to acquire the lock
-  bool free;             //!< to know if the lock is free
-  Thread * owner;        //!< Thread who has acquired the lock
-
+  char *name;          //!< for debugging
+  Listint *sleepqueue; //!< threads waiting to acquire the lock
+  bool free;           //!< to know if the lock is free
+  Thread *owner;       //!< Thread who has acquired the lock
 public:
   //! Object type, for validity checks during system calls (must be the first public field)
   ObjectType type;
 };
-
 
 /*! \class Condition
 \brief Defines the "condition variable" synchronization tool
@@ -123,33 +106,27 @@ public:
 //	Broadcast() -- wake up all threads waiting on the condition
 //
 */
-class Condition {
+class Condition
+{
 public:
   //! Create a condition and initialize it to "no one waiting"
-  Condition(char* debugName);
-
+  Condition(char *debugName);
   //! Deallocate the condition
   ~Condition();
-
   //! For debugging
-  char* getName() { return (name); }
-
+  char *getName() { return (name); }
   //! Wait until the condition is signalled
   void Wait();
-
   //! Wake up one of the thread waiting on the condition
   void Signal();
-
   //! Wake up all threads waiting on the condition
   void Broadcast();
 
 private:
-  char* name;           //!< For debbuging
-  Listint * waitqueue;  //!< Threads asked to wait
-
+  char *name;         //!< For debbuging
+  Listint *waitqueue; //!< Threads asked to wait
 public:
   //! Object type, for validity checks during system calls (must be the first public field)
   ObjectType type;
 };
-
 #endif // SYNCH_H

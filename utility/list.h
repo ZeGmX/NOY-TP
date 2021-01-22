@@ -1,62 +1,50 @@
 /*! \file list.h
     \brief Data structures to manage LISP-like lists.
-
     As in LISP, a list can contain any type of data structure
     as an item on the list: thread control blocks,
     pending interrupts, etc.  That is why each item is a "void *",
     or in other words, a "pointers to anything".
-
  Copyright (c) 1992-1993 The Regents of the University of California.
  All rights reserved.  See copyright.h for copyright notice and limitation
  of liability and disclaimer of warranty provisions.
-
 */
-
 #ifndef LIST_H
 #define LIST_H
-
 #include "kernel/copyright.h"
 #include "utility/utility.h"
-
 /*! \brief definition of a "list element"
-
     The class defines a "list element" which is used to keep track of
     one item on a list.  It is equivalent to a LISP cell, with a "car"
     ("next") pointing to the next element on the list, and a "cdr"
     ("item") pointing to the item on the list.
-
     Internal data structures kept public so that List operations can
     access them directly.
 */
 template <class Priority>
-class ListElement {
+class ListElement
+{
 public:
-
   //! Next element on list, NULL if this is the last.
-  ListElement <Priority> *next;
-
+  ListElement<Priority> *next;
   //! Priority, for a sorted list.
   Priority key;
-
   //! Pointer to item on the list.
   void *item;
-
   //----------------------------- ----------------------------------------
   // ListElement::ListElement
   /*! 	Initializes a list element, so it can be added somewhere on a list.
-
   \param itemPtr is the item to be put on the list.  It can be a pointer
   to anything.
   \param sortKey is the priority of the item, if any.
   */
   //----------------------------------------------------------------------
-  ListElement(void *itemPtr, Priority sortKey){
+  ListElement(void *itemPtr, Priority sortKey)
+  {
     item = itemPtr;
     key = sortKey;
-    next = NULL;	// assume we'll put it at the end of the list
+    next = NULL; // assume we'll put it at the end of the list
   };
 };
-
 /*! \brief Definition of a generic single-linked "list"
 //
 // The following class defines a "list" -- a singly linked list of
@@ -65,19 +53,19 @@ public:
 // increasing order by "key" in ListElement.
 */
 template <class Priority>
-class List {
-  public:
-
+class List
+{
+public:
   //----------------------------------------------------------------------
   // List::List
   /*!	Initialize a list, empty to start with.
   //	Elements can now be added to the list.
   */
   //----------------------------------------------------------------------
-  List(){
+  List()
+  {
     first = last = NULL;
   };
-
   //----------------------------------------------------------------------
   // List::~List
   /*!	Prepare a list for deallocation.  If the list still contains any
@@ -88,11 +76,11 @@ class List {
   //	de-allocate them here.
   */
   //----------------------------------------------------------------------
-  ~List(){
+  ~List()
+  {
     while (Remove() != NULL)
-      ;	 // delete all the list elements
+      ; // delete all the list elements
   };
-
   //----------------------------------------------------------------------
   // List::Prepend
   /*!      Put an "item" on the front of the list.
@@ -105,18 +93,20 @@ class List {
   //		anything.
   */
   //----------------------------------------------------------------------
-  void Prepend(void *item){
+  void Prepend(void *item)
+  {
     ListElement<Priority> *element = new ListElement<Priority>(item, 0);
-
-    if (IsEmpty()) {		// list is empty
+    if (IsEmpty())
+    { // list is empty
       first = element;
       last = element;
-    } else {			// else put it before first
+    }
+    else
+    { // else put it before first
       element->next = first;
       first = element;
     }
   };
-
 
   //----------------------------------------------------------------------
   // List::Append
@@ -130,19 +120,20 @@ class List {
   //		anything.
   */
   //----------------------------------------------------------------------
-  void Append(void *item){
-
-    ListElement<Priority> *element = new ListElement<Priority>(item,(Priority) 0);
-
-    if (IsEmpty()) {		// list is empty
+  void Append(void *item)
+  {
+    ListElement<Priority> *element = new ListElement<Priority>(item, (Priority)0);
+    if (IsEmpty())
+    { // list is empty
       first = element;
       last = element;
-    } else {			// else put it after last
+    }
+    else
+    { // else put it after last
       last->next = element;
       last = element;
     }
   };
-
   //----------------------------------------------------------------------
   // List::Remove
   /*!      Remove the first "item" from the front of the list.
@@ -151,11 +142,10 @@ class List {
   //	Pointer to removed item, NULL if nothing on the list.
   */
   //----------------------------------------------------------------------
-  void *Remove(){
-    return SortedRemove(NULL);  // Same as SortedRemove, but ignore the key
-  }
-  ;
-
+  void *Remove()
+  {
+    return SortedRemove(NULL); // Same as SortedRemove, but ignore the key
+  };
   //----------------------------------------------------------------------
   /*! List::Mapcar
   //	Apply a function to each item on the list, by walking through
@@ -166,24 +156,25 @@ class List {
   //	\param func is the procedure to apply to each element of the list.
   */
   //----------------------------------------------------------------------
-  void Mapcar(VoidFunctionPtr func){
-    for (ListElement<Priority> *ptr = first; ptr != NULL; ptr = ptr->next) {
-      DEBUG('l', (char*)"In mapcar, about to invoke %x(%x)\n", func, ptr->item);
+  void Mapcar(VoidFunctionPtr func)
+  {
+    for (ListElement<Priority> *ptr = first; ptr != NULL; ptr = ptr->next)
+    {
+      DEBUG('l', (char *)"In mapcar, about to invoke %x(%x)\n", func, ptr->item);
       (*func)((int64_t)ptr->item);
     }
   };
-
   //----------------------------------------------------------------------
   // List::IsEmpty
   //!      \return TRUE if the list is empty (has no items).
   //----------------------------------------------------------------------
-  bool IsEmpty(){
+  bool IsEmpty()
+  {
     if (first == NULL)
       return true;
     else
       return false;
   };
-
   //----------------------------------------------------------------------
   // List::SortedInsert
   /*!      Insert an "item" into a list, so that the list elements are
@@ -199,32 +190,36 @@ class List {
   //	\param sortKey is the priority of the item.
   */
   //----------------------------------------------------------------------
-  void SortedInsert(void *item, Priority sortKey){
+  void SortedInsert(void *item, Priority sortKey)
+  {
     ListElement<Priority> *element = new ListElement<Priority>(item, sortKey);
-
-    ListElement<Priority> *ptr;		// keep track
-
-    if (IsEmpty()) {	// if list is empty, put
+    ListElement<Priority> *ptr; // keep track
+    if (IsEmpty())
+    { // if list is empty, put
       first = element;
       last = element;
-    } else if (sortKey < first->key) {
+    }
+    else if (sortKey < first->key)
+    {
       // item goes on front of list
       element->next = first;
       first = element;
-    } else {		// look for first elt in list bigger than item
-      for (ptr = first; ptr->next != NULL; ptr = ptr->next) {
-	if (sortKey < ptr->next->key) {
-	  element->next = ptr->next;
-	  ptr->next = element;
-	  return;
-	}
+    }
+    else
+    { // look for first elt in list bigger than item
+      for (ptr = first; ptr->next != NULL; ptr = ptr->next)
+      {
+        if (sortKey < ptr->next->key)
+        {
+          element->next = ptr->next;
+          ptr->next = element;
+          return;
+        }
       }
-      last->next = element;		// item goes at end of list
+      last->next = element; // item goes at end of list
       last = element;
     }
-
   };
-
 
   //----------------------------------------------------------------------
   // List::SortedRemove
@@ -239,20 +234,21 @@ class List {
   //	priority of the removed item.
   */
   //----------------------------------------------------------------------
-  void *SortedRemove(Priority *keyPtr){
+  void *SortedRemove(Priority *keyPtr)
+  {
     ListElement<Priority> *element = first;
     void *thing;
-
     if (IsEmpty())
       return NULL;
-
     ASSERT(first != first->next);
-
     thing = first->item;
-    if (first == last) {	// list had one item, now has none
+    if (first == last)
+    { // list had one item, now has none
       first = NULL;
       last = NULL;
-    } else {
+    }
+    else
+    {
       first = element->next;
     }
     if (keyPtr != NULL)
@@ -260,7 +256,6 @@ class List {
     delete element;
     return thing;
   };
-
   //----------------------------------------------------------------------
   // List::Search
   /*!      Search for an element in the list
@@ -272,20 +267,22 @@ class List {
   //    item: pointer to the element we want to find
   */
   //----------------------------------------------------------------------
-  bool Search(void *item){
+  bool Search(void *item)
+  {
     ListElement<Priority> *element = first;
-
-      if (IsEmpty()) {
-	return false;
+    if (IsEmpty())
+    {
+      return false;
+    }
+    else
+    {
+      while ((element != last) && (element->item != item))
+      {
+        element = element->next;
       }
-      else {
-	while ((element != last) && (element->item != item)) {
-	  element = element->next;
-	}
-	return (element->item == item);
-      }
-    } ;
-
+      return (element->item == item);
+    }
+  };
   //----------------------------------------------------------------------
   // List::RemoveItem
   /*!      Remove the specified item from the list if present
@@ -297,11 +294,12 @@ class List {
   //    item: pointer to the element we want to remove
   */
   //----------------------------------------------------------------------
-  void RemoveItem(void *item){
+  void RemoveItem(void *item)
+  {
     void *temp;
-    while ((temp=this->Remove()) != item) this->Append(temp);
+    while ((temp = this->Remove()) != item)
+      this->Append(temp);
   };
-
   //----------------------------------------------------------------------
   // List::getFirst
   /*!      Return the first element of a list
@@ -313,16 +311,14 @@ class List {
   //    none
   */
   //----------------------------------------------------------------------
-   ListElement<Priority> *getFirst(void) {return first;}
+  ListElement<Priority> *getFirst(void) { return first; }
 
 private:
   //! Head of the list, NULL if list is empty.
   ListElement<Priority> *first;
   //! Last element of list.
-  ListElement<Priority>  *last;
+  ListElement<Priority> *last;
 };
-
 typedef List<int> Listint;
 typedef List<Time> ListTime;
-
 #endif // LIST_H
