@@ -1,7 +1,14 @@
 Makefile.config
 *.o
-*/*.o
-tests/
+*.a
+*.d
 html/
 CROSS_COMPILER_MIPS_LINUX.tar.bz2
 CROSS_COMPILER_MIPS_LINUX/
+nachos
+
+test/halt
+test/hello
+test/matmult
+test/shell
+test/sort
