@@ -639,7 +639,6 @@ void ExceptionHandler(ExceptionType exceptiontype, int vaddr)
       }
       break;
     }
-
 #endif
 		case SC_REMOVE:
 		{

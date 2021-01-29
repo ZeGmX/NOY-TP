@@ -99,6 +99,7 @@ Thread::~Thread()
 // \return NO_ERROR on success, an error code on error
 */
 //----------------------------------------------------------------------
+#ifndef ETUDIANTS_TP
 int Thread::Start(Process *owner,
                   int32_t func, int arg)
 {
@@ -106,6 +107,30 @@ int Thread::Start(Process *owner,
   printf("**** Warning: method Thread::Start is not implemented yet\n");
   exit(-1);
 }
+#endif
+#ifdef ETUDIANTS_TP
+int Thread::Start(Process *owner,
+                  int32_t func, int arg)
+{
+  ASSERT(process == NULL);
+  process = owner;
+  stackPointer = process->addrspace->StackAllocate();
+
+  // Initializing the simulator context
+  int8_t* base_stack_addr = AllocBoundedArray(SIMULATORSTACKSIZE);
+  InitSimulatorContext(base_stack_addr, SIMULATORSTACKSIZE);
+
+  // Initializing the thread context
+  InitThreadContext(func, 0, arg);
+
+  // Updates the other variables
+  process->numThreads++;
+  g_alive->Append(this);
+  g_scheduler->ReadyToRun(this);
+
+  return NO_ERROR;
+}
+#endif
 
 //----------------------------------------------------------------------
 // Thread::InitThreadContext
@@ -249,6 +274,7 @@ void Thread::CheckOverflow()
 //	between setting g_thread_to_be_destroyed and going to sleep.
 */
 //----------------------------------------------------------------------
+#ifndef ETUDIANTS_TP
 void Thread::Finish()
 {
 
@@ -259,6 +285,19 @@ void Thread::Finish()
   // Go to sleep
   Sleep(); // invokes SWITCH
 }
+#endif
+#ifdef ETUDIANTS_TP
+void Thread::Finish()
+{
+
+  DEBUG('t', (char *)"Finishing thread \"%s\"\n", GetName());
+
+  g_thread_to_be_destroyed = this;
+
+  // Go to sleep
+  Sleep(); // invokes SWITCH
+}
+#endif
 
 //----------------------------------------------------------------------
 // Thread::Yield
@@ -340,6 +379,7 @@ void Thread::Sleep()
   g_scheduler->SwitchTo(nextThread);
 }
 
+#ifndef ETUDIANTS_TP
 //----------------------------------------------------------------------
 // Thread::SaveProcessorState
 /*!	Save the CPU state of a user program on a context switch
@@ -362,6 +402,41 @@ void Thread::RestoreProcessorState()
   printf("**** Warning: method Thread::RestoreProcessorState is not implemented yet\n");
   exit(-1);
 }
+#endif
+#ifdef ETUDIANTS_TP
+//----------------------------------------------------------------------
+// Thread::SaveProcessorState
+/*!	Save the CPU state of a user program on a context switch
+*/
+//----------------------------------------------------------------------
+void Thread::SaveProcessorState()
+{
+  for (int i = 0 ; i < NUM_INT_REGS ; i++) {
+      thread_context.int_registers[i] = g_machine->ReadIntRegister(i);
+  }
+  for (int i = 0 ; i < NUM_FP_REGS ; i++) {
+      thread_context.int_registers[i] = g_machine->ReadFPRegister(i);
+  }
+  thread_context.cc = g_machine->ReadCC();
+}
+
+//----------------------------------------------------------------------
+// Thread::RestoreProcessorState
+/*!	Restore the CPU state of a user program on a context switch.
+*/
+//----------------------------------------------------------------------
+
+void Thread::RestoreProcessorState()
+{
+  for (int i = 0 ; i < NUM_INT_REGS ; i++) {
+      g_machine->WriteIntRegister(i, thread_context.int_registers[i]);
+  }
+  for (int i = 0 ; i < NUM_FP_REGS ; i++) {
+      g_machine->WriteIntRegister(i, thread_context.float_registers[i]);
+  }
+  g_machine->WriteCC(thread_context.cc);
+}
+#endif
 
 //----------------------------------------------------------------------
 // Thread::SaveSimulatorState
