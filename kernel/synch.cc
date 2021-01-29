@@ -87,14 +87,14 @@ void Semaphore::P()
 #ifdef ETUDIANTS_TP
 void Semaphore::P()
 {
-  g_machine->interrupt->SetStatus(INTERRUPTS_OFF);
+  IntStatus old = g_machine->interrupt->SetStatus(INTERRUPTS_OFF);
   value--;
   if (value < 0)
   {
     queue->Append(g_current_thread);
     g_current_thread->Sleep();
   }
-  g_machine->interrupt->SetStatus(INTERRUPTS_ON);
+  g_machine->interrupt->SetStatus(old);
 }
 #endif
 //----------------------------------------------------------------------
@@ -115,7 +115,7 @@ void Semaphore::V()
 #ifdef ETUDIANTS_TP
 void Semaphore::V()
 {
-  g_machine->interrupt->SetStatus(INTERRUPTS_OFF);
+  IntStatus old = g_machine->interrupt->SetStatus(INTERRUPTS_OFF);
   value++;
   if (value >= 0)
   {
@@ -125,7 +125,7 @@ void Semaphore::V()
       g_scheduler->ReadyToRun(t);
     }
   }
-  g_machine->interrupt->SetStatus(INTERRUPTS_ON);
+  g_machine->interrupt->SetStatus(old);
 }
 #endif
 //----------------------------------------------------------------------
@@ -179,7 +179,7 @@ void Lock::Acquire()
 #ifdef ETUDIANTS_TP
 void Lock::Acquire()
 {
-  g_machine->interrupt->SetStatus(INTERRUPTS_OFF);
+  IntStatus old = g_machine->interrupt->SetStatus(INTERRUPTS_OFF);
   if (free)
   {
     free = false;
@@ -190,7 +190,7 @@ void Lock::Acquire()
     sleepqueue->Append(g_current_thread);
     g_current_thread->Sleep();
   }
-  g_machine->interrupt->SetStatus(INTERRUPTS_ON);
+  g_machine->interrupt->SetStatus(old);
 }
 #endif
 //----------------------------------------------------------------------
@@ -212,7 +212,7 @@ void Lock::Release()
 #ifdef ETUDIANTS_TP
 void Lock::Release()
 {
-  g_machine->interrupt->SetStatus(INTERRUPTS_OFF);
+  IntStatus old = g_machine->interrupt->SetStatus(INTERRUPTS_OFF);
   if (isHeldByCurrentThread())
   {
     if (!sleepqueue->IsEmpty())
@@ -227,7 +227,7 @@ void Lock::Release()
       owner = nullptr;
     }
   }
-  g_machine->interrupt->SetStatus(INTERRUPTS_ON);
+  g_machine->interrupt->SetStatus(old);
 }
 #endif
 
@@ -280,10 +280,10 @@ void Condition::Wait()
 #ifdef ETUDIANTS_TP
 void Condition::Wait()
 {
-  g_machine->interrupt->SetStatus(INTERRUPTS_OFF);
+  IntStatus old = g_machine->interrupt->SetStatus(INTERRUPTS_OFF);
   waitqueue->Append(g_current_thread);
   g_current_thread->Sleep();
-  g_machine->interrupt->SetStatus(INTERRUPTS_ON);
+  g_machine->interrupt->SetStatus(old);
 }
 #endif
 //----------------------------------------------------------------------
@@ -302,13 +302,13 @@ void Condition::Signal()
 #ifdef ETUDIANTS_TP
 void Condition::Signal()
 {
-  g_machine->interrupt->SetStatus(INTERRUPTS_OFF);
+  IntStatus old = g_machine->interrupt->SetStatus(INTERRUPTS_OFF);
   if (!waitqueue->IsEmpty())
   {
     Thread *t = (Thread *)waitqueue->Remove();
     g_scheduler->ReadyToRun(t);
   }
-  g_machine->interrupt->SetStatus(INTERRUPTS_ON);
+  g_machine->interrupt->SetStatus(old);
 }
 #endif
 //----------------------------------------------------------------------
@@ -327,12 +327,12 @@ void Condition::Broadcast()
 #ifdef ETUDIANTS_TP
 void Condition::Broadcast()
 {
-  g_machine->interrupt->SetStatus(INTERRUPTS_OFF);
+  IntStatus old = g_machine->interrupt->SetStatus(INTERRUPTS_OFF);
   while (!waitqueue->IsEmpty())
   {
     Thread *t = (Thread *)waitqueue->Remove();
     g_scheduler->ReadyToRun(t);
   }
-  g_machine->interrupt->SetStatus(INTERRUPTS_ON);
+  g_machine->interrupt->SetStatus(old);
 }
 #endif

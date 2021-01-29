@@ -499,7 +499,7 @@ void ExceptionHandler(ExceptionType exceptiontype, int vaddr)
 			}
 			break;
 		}
-
+#define ETUDIANTS_TP
 #ifdef ETUDIANTS_TP
     case SC_P:
 		{

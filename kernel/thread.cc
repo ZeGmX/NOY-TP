@@ -289,13 +289,16 @@ void Thread::Finish()
 #ifdef ETUDIANTS_TP
 void Thread::Finish()
 {
-
+  IntStatus old = g_machine->interrupt->SetStatus(INTERRUPTS_OFF);
   DEBUG('t', (char *)"Finishing thread \"%s\"\n", GetName());
 
   g_thread_to_be_destroyed = this;
+  g_alive->RemoveItem(this);
 
   // Go to sleep
   Sleep(); // invokes SWITCH
+
+  g_machine->interrupt->SetStatus(old);
 }
 #endif
 
