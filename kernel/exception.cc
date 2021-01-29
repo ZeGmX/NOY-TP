@@ -499,8 +499,9 @@ void ExceptionHandler(ExceptionType exceptiontype, int vaddr)
 			}
 			break;
 		}
+
 #ifdef ETUDIANTS_TP
-		case SC_P:
+    case SC_P:
 		{
 			DEBUG('e', (char *)"Exception: SC_P\n");
 			int32_t semaId = g_machine->ReadIntRegister(4);
@@ -535,6 +536,110 @@ void ExceptionHandler(ExceptionType exceptiontype, int vaddr)
 			g_machine->WriteIntRegister(2, sid);
 			break;
 		}
+
+     case SC_SEM_DESTROY: {
+        DEBUG('e', (char *)"Exception: SC_SEM_DESTROY\n");
+        int32_t semaId = g_machine->ReadIntRegister(4);
+        Semaphore *sema = (Semaphore *)g_object_ids->SearchObject(semaId);
+        delete sema;
+        break;
+     }
+
+    case SC_LOCK_CREATE: {
+        DEBUG('e', (char *)"Exception: SC_LOCK_CREATE\n");
+        int32_t debugNameId = g_machine->ReadIntRegister(4);
+        int strLength = GetLengthParam(debugNameId);
+        char debugName[strLength];
+        GetStringParam(debugNameId, debugName, strLength);
+        Lock* lock = new Lock(debugName);
+        int32_t lid = g_object_ids->AddObject(lock);
+        g_machine->WriteIntRegister(2, lid);
+        break;
+     }
+
+    case SC_LOCK_DESTROY: {
+       DEBUG('e', (char *)"Exception: SC_LOCK_DESTROY\n");
+       int32_t lockId = g_machine->ReadIntRegister(4);
+       Lock* lock = (Lock*)g_object_ids->SearchObject(lockId);
+       delete lock;
+       break;
+    }
+
+    case SC_LOCK_ACQUIRE: {
+      DEBUG('e', (char *)"Exception: SC_LOCK_ACQUIRE\n");
+      int32_t lockId = g_machine->ReadIntRegister(4);
+      Lock* lock = (Lock*)g_object_ids->SearchObject(lockId);
+      if (lock && lock->type == LOCK_TYPE)
+      {
+        lock->Acquire();
+      }
+      break;
+    }
+
+    case SC_LOCK_RELEASE: {
+      DEBUG('e', (char *)"Exception: SC_LOCK_RELEASE\n");
+      int32_t lockId = g_machine->ReadIntRegister(4);
+      Lock* lock = (Lock*)g_object_ids->SearchObject(lockId);
+      if (lock && lock->type == LOCK_TYPE)
+      {
+        lock->Release();
+      }
+      break;
+    }
+
+    case SC_COND_CREATE: {
+        DEBUG('e', (char *)"Exception: SC_COND_CREATE\n");
+        int32_t debugNameId = g_machine->ReadIntRegister(4);
+        int strLength = GetLengthParam(debugNameId);
+        char debugName[strLength];
+        GetStringParam(debugNameId, debugName, strLength);
+        Condition* cond = new Condition(debugName);
+        int32_t cid = g_object_ids->AddObject(cond);
+        g_machine->WriteIntRegister(2, cid);
+        break;
+     }
+
+    case SC_COND_DESTROY: {
+       DEBUG('e', (char *)"Exception: SC_COND_DESTROY\n");
+       int32_t condId = g_machine->ReadIntRegister(4);
+       Condition* cond = (Condition*)g_object_ids->SearchObject(condId);
+       delete cond;
+       break;
+    }
+
+    case SC_COND_WAIT: {
+      DEBUG('e', (char *)"Exception: SC_COND_WAIT\n");
+      int32_t condId = g_machine->ReadIntRegister(4);
+      Condition* cond = (Condition*)g_object_ids->SearchObject(condId);
+      if (cond && cond->type == CONDITION_TYPE)
+      {
+        cond->Wait();
+      }
+      break;
+    }
+
+    case SC_COND_SIGNAL: {
+      DEBUG('e', (char *)"Exception: SC_COND_SIGNAL\n");
+      int32_t condId = g_machine->ReadIntRegister(4);
+      Condition* cond = (Condition*)g_object_ids->SearchObject(condId);
+      if (cond && cond->type == CONDITION_TYPE)
+      {
+        cond->Signal();
+      }
+      break;
+    }
+
+    case SC_COND_BROADCAST: {
+      DEBUG('e', (char *)"Exception: SC_COND_BROADCAST\n");
+      int32_t condId = g_machine->ReadIntRegister(4);
+      Condition* cond = (Condition*)g_object_ids->SearchObject(condId);
+      if (cond && cond->type == CONDITION_TYPE)
+      {
+        cond->Broadcast();
+      }
+      break;
+    }
+
 #endif
 		case SC_REMOVE:
 		{
