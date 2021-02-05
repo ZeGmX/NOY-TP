@@ -499,18 +499,21 @@ void ExceptionHandler(ExceptionType exceptiontype, int vaddr)
 			}
 			break;
 		}
-#define ETUDIANTS_TP
 #ifdef ETUDIANTS_TP
     case SC_P:
-		{
-			DEBUG('e', (char *)"Exception: SC_P\n");
-			int32_t semaId = g_machine->ReadIntRegister(4);
-			Semaphore *sema = (Semaphore *)g_object_ids->SearchObject(semaId);
-			if (sema && sema->type == SEMAPHORE_TYPE)
-			{
-				sema->P();
-			}
-			break;
+    {
+      DEBUG('e', (char *)"Exception: SC_P\n");
+      int32_t semaId = g_machine->ReadIntRegister(4);
+      Semaphore *sema = (Semaphore *)g_object_ids->SearchObject(semaId);
+      if (sema && sema->type == SEMAPHORE_TYPE)
+      {
+        sema->P();
+        g_machine->WriteIntRegister(2, NO_ERROR);
+      }
+      else {
+        g_machine->WriteIntRegister(2, INVALID_SEMAPHORE_ID);
+      }
+      break;
 		}
 		case SC_V:
 		{
@@ -520,7 +523,11 @@ void ExceptionHandler(ExceptionType exceptiontype, int vaddr)
 			if (sema && sema->type == SEMAPHORE_TYPE)
 			{
 				sema->V();
+        g_machine->WriteIntRegister(2, NO_ERROR);
 			}
+      else {
+        g_machine->WriteIntRegister(2, INVALID_SEMAPHORE_ID);
+      }
 			break;
 		}
 		case SC_SEM_CREATE:
@@ -533,7 +540,8 @@ void ExceptionHandler(ExceptionType exceptiontype, int vaddr)
 			GetStringParam(debugNameId, debugName, strLength);
 			Semaphore *res = new Semaphore(debugName, counter);
 			int32_t sid = g_object_ids->AddObject(res);
-			g_machine->WriteIntRegister(2, sid);
+      if (counter >= 0) g_machine->WriteIntRegister(2, sid);
+      else g_machine->WriteIntRegister(2, INVALID_COUNTER);
 			break;
 		}
 
@@ -541,7 +549,13 @@ void ExceptionHandler(ExceptionType exceptiontype, int vaddr)
         DEBUG('e', (char *)"Exception: SC_SEM_DESTROY\n");
         int32_t semaId = g_machine->ReadIntRegister(4);
         Semaphore *sema = (Semaphore *)g_object_ids->SearchObject(semaId);
-        delete sema;
+        if (sema) {
+          delete sema;
+          g_machine->WriteIntRegister(2, NO_ERROR);
+        }
+        else {
+          g_machine->WriteIntRegister(2, INVALID_SEMAPHORE_ID);
+        }
         break;
      }
 
@@ -561,7 +575,13 @@ void ExceptionHandler(ExceptionType exceptiontype, int vaddr)
        DEBUG('e', (char *)"Exception: SC_LOCK_DESTROY\n");
        int32_t lockId = g_machine->ReadIntRegister(4);
        Lock* lock = (Lock*)g_object_ids->SearchObject(lockId);
-       delete lock;
+       if (lock) {
+         delete lock;
+         g_machine->WriteIntRegister(2, NO_ERROR);
+       }
+       else {
+         g_machine->WriteIntRegister(2, INVALID_LOCK_ID);
+       }
        break;
     }
 
@@ -572,6 +592,10 @@ void ExceptionHandler(ExceptionType exceptiontype, int vaddr)
       if (lock && lock->type == LOCK_TYPE)
       {
         lock->Acquire();
+        g_machine->WriteIntRegister(2, NO_ERROR);
+      }
+      else {
+        g_machine->WriteIntRegister(2, INVALID_LOCK_ID);
       }
       break;
     }
@@ -583,6 +607,10 @@ void ExceptionHandler(ExceptionType exceptiontype, int vaddr)
       if (lock && lock->type == LOCK_TYPE)
       {
         lock->Release();
+        g_machine->WriteIntRegister(2, NO_ERROR);
+      }
+      else {
+        g_machine->WriteIntRegister(2, INVALID_LOCK_ID);
       }
       break;
     }
@@ -603,7 +631,13 @@ void ExceptionHandler(ExceptionType exceptiontype, int vaddr)
        DEBUG('e', (char *)"Exception: SC_COND_DESTROY\n");
        int32_t condId = g_machine->ReadIntRegister(4);
        Condition* cond = (Condition*)g_object_ids->SearchObject(condId);
-       delete cond;
+       if (cond) {
+         delete cond;
+         g_machine->WriteIntRegister(2, NO_ERROR);
+       }
+       else {
+         g_machine->WriteIntRegister(2, INVALID_CONDITION_ID);
+       }
        break;
     }
 
@@ -614,6 +648,10 @@ void ExceptionHandler(ExceptionType exceptiontype, int vaddr)
       if (cond && cond->type == CONDITION_TYPE)
       {
         cond->Wait();
+        g_machine->WriteIntRegister(2, NO_ERROR);
+      }
+      else {
+        g_machine->WriteIntRegister(2, INVALID_CONDITION_ID);
       }
       break;
     }
@@ -625,6 +663,10 @@ void ExceptionHandler(ExceptionType exceptiontype, int vaddr)
       if (cond && cond->type == CONDITION_TYPE)
       {
         cond->Signal();
+        g_machine->WriteIntRegister(2, NO_ERROR);
+      }
+      else {
+        g_machine->WriteIntRegister(2, INVALID_CONDITION_ID);
       }
       break;
     }
@@ -636,6 +678,10 @@ void ExceptionHandler(ExceptionType exceptiontype, int vaddr)
       if (cond && cond->type == CONDITION_TYPE)
       {
         cond->Broadcast();
+        g_machine->WriteIntRegister(2, NO_ERROR);
+      }
+      else {
+        g_machine->WriteIntRegister(2, INVALID_CONDITION_ID);
       }
       break;
     }

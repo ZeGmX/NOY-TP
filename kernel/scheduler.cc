@@ -84,6 +84,8 @@ Scheduler::FindNextToRun()
 //	\param nextThread is the thread to be put into the CPU.
 */
 //----------------------------------------------------------------------
+#define ETUDIANTS_TP // TODO: remove this line
+#ifndef ETUDIANTS_TP
 void Scheduler::SwitchTo(Thread *nextThread)
 {
     Thread *oldThread = g_current_thread;
@@ -119,6 +121,44 @@ void Scheduler::SwitchTo(Thread *nextThread)
     // point, we were still running on the old thread's stack!
     printf("**** Warning: thread actual deletion not implemented yet\n");
 }
+#endif
+#ifdef ETUDIANTS_TP
+void Scheduler::SwitchTo(Thread *nextThread)
+{
+    Thread *oldThread = g_current_thread;
+
+    g_current_thread->CheckOverflow(); // check if the old thread
+                                       // had an undetected stack overflow
+
+    DEBUG('t', (char *)"Switching from thread \"%s\" to thread \"%s\" time %llu\n",
+          g_current_thread->GetName(), nextThread->GetName(), g_stats->getTotalTicks());
+
+    // Modify the current thread
+    g_current_thread = nextThread;
+
+    // Save the context of old thread
+    oldThread->SaveProcessorState();
+    oldThread->SaveSimulatorState();
+
+    // Do the context switch if the two threads are different
+    if (oldThread != g_current_thread)
+    {
+        // Restore the state of the operating system from its
+        // kernelContext structure such that it goes on executing when
+        // it was last interrupted
+        nextThread->RestoreProcessorState();
+        nextThread->RestoreSimulatorState();
+    }
+
+    DEBUG('t', (char *)"Now in thread \"%s\" time %llu\n", g_current_thread->GetName(), g_stats->getTotalTicks());
+
+    // If the old thread gave up the processor because it was finishing,
+    // we need to delete its carcass.  Note we cannot delete the thread
+    // before now (for example, in Thread::Finish()), because up to this
+    // point, we were still running on the old thread's stack!
+    if (g_thread_to_be_destroyed == oldThread) delete oldThread;
+}
+#endif
 
 //----------------------------------------------------------------------
 // Scheduler::Print
