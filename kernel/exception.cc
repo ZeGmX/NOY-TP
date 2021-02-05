@@ -867,7 +867,7 @@ void ExceptionHandler(ExceptionType exceptiontype, int vaddr)
 		printf("FATAL USER EXCEPTION (Thread %s, PC=0x%x):\n",
 			   g_current_thread->GetName(), g_machine->ReadIntRegister(PC_REG));
 		printf("\t*** Access to invalid or unmapped virtual address 0x%x ***\n",
-			   vaddr);
+         vaddr);
 		g_machine->interrupt->Halt(ERROR);
 		break;
 	case OVERFLOW_EXCEPTION:

@@ -121,7 +121,7 @@ int Thread::Start(Process *owner,
   InitSimulatorContext(base_stack_addr, SIMULATORSTACKSIZE);
 
   // Initializing the thread context
-  InitThreadContext(func, 0, arg);
+  InitThreadContext(func, stackPointer + 4, arg);
 
   // Updates the other variables
   process->numThreads++;
@@ -418,7 +418,7 @@ void Thread::SaveProcessorState()
       thread_context.int_registers[i] = g_machine->ReadIntRegister(i);
   }
   for (int i = 0 ; i < NUM_FP_REGS ; i++) {
-      thread_context.int_registers[i] = g_machine->ReadFPRegister(i);
+      thread_context.float_registers[i] = g_machine->ReadFPRegister(i);
   }
   thread_context.cc = g_machine->ReadCC();
 }
@@ -435,7 +435,7 @@ void Thread::RestoreProcessorState()
       g_machine->WriteIntRegister(i, thread_context.int_registers[i]);
   }
   for (int i = 0 ; i < NUM_FP_REGS ; i++) {
-      g_machine->WriteIntRegister(i, thread_context.float_registers[i]);
+      g_machine->WriteFPRegister(i, thread_context.float_registers[i]);
   }
   g_machine->WriteCC(thread_context.cc);
 }

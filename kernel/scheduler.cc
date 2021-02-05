@@ -84,7 +84,6 @@ Scheduler::FindNextToRun()
 //	\param nextThread is the thread to be put into the CPU.
 */
 //----------------------------------------------------------------------
-#define ETUDIANTS_TP // TODO: remove this line
 #ifndef ETUDIANTS_TP
 void Scheduler::SwitchTo(Thread *nextThread)
 {
