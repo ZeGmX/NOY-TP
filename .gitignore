@@ -13,6 +13,8 @@ test/hello
 test/matmult
 test/shell
 test/sort
+test/test_lock
+test/test_semaphore
 DISK
 SWAPDISK
 doxygen.cfg

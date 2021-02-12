@@ -5,7 +5,7 @@
 #
 # To add generate a new program, just update the PROGRAMS target below
 
-PROGRAMS = halt hello shell matmult sort
+PROGRAMS = halt hello shell matmult sort test_semaphore test_lock
 
 all: $(PROGRAMS)
 
@@ -14,4 +14,3 @@ include $(TOPDIR)/Makefile.user
 
 # Dependances
 $(PROGRAMS): % : $(USERLIB)/sys.o $(USERLIB)/libnachos.o %.o
-

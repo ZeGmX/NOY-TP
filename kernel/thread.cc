@@ -121,7 +121,7 @@ int Thread::Start(Process *owner,
   InitSimulatorContext(base_stack_addr, SIMULATORSTACKSIZE);
 
   // Initializing the thread context
-  InitThreadContext(func, stackPointer + 4, arg);
+  InitThreadContext(func, stackPointer, arg);
 
   // Updates the other variables
   process->numThreads++;
