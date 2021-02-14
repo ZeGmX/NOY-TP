@@ -13,17 +13,33 @@
 
 #define SIZE 512
 
-SemId filled, empty;
+SemId filled, empty, mutex;
 int buff[SIZE];
 int indexBegin, indexEnd;
+int count_empty;
 
 void addItem(int item) {
+  P(mutex);
+  if (count_empty == 0)
+  {
+    n_printf("No items to add!\n");
+    Halt();
+  }
+  count_empty--;
+  V(mutex);
   buff[indexEnd] = item;
-  indexEnd = (indexEnd + 1) % SIZE;
-  if (indexEnd == indexBegin) n_printf("overlapping");
+  indexEnd = (indexEnd + 1) % SIZE; 
 }
 
 int takeItem() {
+  P(mutex);
+  if (count_empty == SIZE)
+  {
+    n_printf("No items to take!\n");
+    Halt();
+  }
+  count_empty++;
+  V(mutex);
   int item = buff[indexBegin];
   indexBegin = (indexBegin + 1) % SIZE;
   return item;
@@ -36,7 +52,7 @@ void prod() {
     P(empty);
     addItem(item);
     V(filled);
-    n_printf("Proucter put item: %d\n", item);
+    n_printf("Producter put item: %d\n", item);
   }
 }
 
@@ -53,13 +69,13 @@ void consom() {
 int main() {
   filled = SemCreate("semaFilled", 0);
   empty = SemCreate("semaEmpty", SIZE);
+  mutex = SemCreate("semaMutex", 1);
   indexBegin = 0;
   indexEnd = 0;
+  count_empty = SIZE;
 
-  ThreadId id_cons = threadCreate("consumer", &consom);
   ThreadId id_prod = threadCreate("producer", &prod);
-
-  n_printf("Prod id: %d\nCons id: %d\n", id_prod, id_cons);
+  ThreadId id_cons = threadCreate("consumer", &consom);
 
   return 0;
 }
