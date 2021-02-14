@@ -209,7 +209,7 @@ void Lock::Acquire()
 //	interrupts.  Scheduler::ReadyToRun() assumes that threads
 //	are disabled when it is called.
 */
-//--------------------------if (count_empty == 0)
+//--------------------------
 #ifndef ETUDIANTS_TP
 void Lock::Release()
 {
