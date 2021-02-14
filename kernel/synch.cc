@@ -93,7 +93,7 @@ void Semaphore::P()
   value--;
   if (value < 0)
   {
-    DEBUG('s', (char*)"Processus blocked on semaphore g_current_thread->GetName()\n");
+    DEBUG('s', (char*)"Processus blocked on semaphore %s\n", g_current_thread->GetName());
     queue->Append(g_current_thread);
     g_current_thread->Sleep();
   }
@@ -209,7 +209,7 @@ void Lock::Acquire()
 //	interrupts.  Scheduler::ReadyToRun() assumes that threads
 //	are disabled when it is called.
 */
-//----------------------------------------------------------------------
+//--------------------------if (count_empty == 0)
 #ifndef ETUDIANTS_TP
 void Lock::Release()
 {
