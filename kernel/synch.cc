@@ -88,9 +88,12 @@ void Semaphore::P()
 void Semaphore::P()
 {
   IntStatus old = g_machine->interrupt->SetStatus(INTERRUPTS_OFF);
+  DEBUG('s', (char*)"Doing P on semaphore %s\n", getName());
+  DEBUG('s', (char*)"Current counter value: %d\n", value);
   value--;
   if (value < 0)
   {
+    DEBUG('s', (char*)"Processus blocked on semaphore g_current_thread->GetName()\n");
     queue->Append(g_current_thread);
     g_current_thread->Sleep();
   }
@@ -116,12 +119,15 @@ void Semaphore::V()
 void Semaphore::V()
 {
   IntStatus old = g_machine->interrupt->SetStatus(INTERRUPTS_OFF);
+  DEBUG('s', (char*)"Doing V on semaphore %s\n", getName());
+  DEBUG('s', (char*)"Current counter value: %d\n", value);
   value++;
   if (value >= 0)
   {
     if (!queue->IsEmpty())
     {
       Thread *t = (Thread *)queue->Remove();
+      DEBUG('s', (char*)"Releasing thread %s\n", t->GetName());
       g_scheduler->ReadyToRun(t);
     }
   }
@@ -180,10 +186,12 @@ void Lock::Acquire()
 void Lock::Acquire()
 {
   IntStatus old = g_machine->interrupt->SetStatus(INTERRUPTS_OFF);
+  DEBUG('s', (char*)"Doing Acquire on Lock %s\n", getName());
   if (free)
   {
     free = false;
     owner = g_current_thread;
+    DEBUG('s', (char*)"Lock taken by thread %s\n", owner->GetName());
   }
   else
   {
@@ -213,6 +221,7 @@ void Lock::Release()
 void Lock::Release()
 {
   IntStatus old = g_machine->interrupt->SetStatus(INTERRUPTS_OFF);
+  DEBUG('s', (char*)"Doing Release on Lock %s\n", getName());
   if (isHeldByCurrentThread())
   {
     if (!sleepqueue->IsEmpty())
@@ -220,11 +229,13 @@ void Lock::Release()
       Thread *t = (Thread *)sleepqueue->Remove();
       g_scheduler->ReadyToRun(t);
       owner = t;
+      DEBUG('s', (char*)"Thread %s took the lock %s\n", t->GetName(), getName());
     }
     else
     {
       free = true;
       owner = nullptr;
+      DEBUG('s', (char*)"No thread to take back the lock %s\n", getName());
     }
   }
   g_machine->interrupt->SetStatus(old);
@@ -281,6 +292,7 @@ void Condition::Wait()
 void Condition::Wait()
 {
   IntStatus old = g_machine->interrupt->SetStatus(INTERRUPTS_OFF);
+  DEBUG('s', (char*)"Thread %s called Wait on the condition %s\n", g_current_thread->GetName(), getName());
   waitqueue->Append(g_current_thread);
   g_current_thread->Sleep();
   g_machine->interrupt->SetStatus(old);
@@ -303,9 +315,11 @@ void Condition::Signal()
 void Condition::Signal()
 {
   IntStatus old = g_machine->interrupt->SetStatus(INTERRUPTS_OFF);
+  DEBUG('s', (char*)"Thread %s called Signal on the condition %s\n", g_current_thread->GetName(), getName());
   if (!waitqueue->IsEmpty())
   {
     Thread *t = (Thread *)waitqueue->Remove();
+    DEBUG('s', (char*)"Condition %s wakes up thread %s\n", getName(), g_current_thread->GetName());
     g_scheduler->ReadyToRun(t);
   }
   g_machine->interrupt->SetStatus(old);
@@ -328,9 +342,11 @@ void Condition::Broadcast()
 void Condition::Broadcast()
 {
   IntStatus old = g_machine->interrupt->SetStatus(INTERRUPTS_OFF);
+  DEBUG('s', (char*)"Thread %s called Broadcast on the condition %s\n", g_current_thread->GetName(), getName());
   while (!waitqueue->IsEmpty())
   {
     Thread *t = (Thread *)waitqueue->Remove();
+    DEBUG('s', (char*)"Condition %s wakes up thread %s\n", getName(), t->GetName());
     g_scheduler->ReadyToRun(t);
   }
   g_machine->interrupt->SetStatus(old);
