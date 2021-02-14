@@ -210,11 +210,6 @@ void Lock::Acquire()
 //	are disabled when it is called.
 */
 //--------------------------if (count_empty == 0)
-{
-  n_printf("No items to add!\n");
-  Halt();
-}
-count_empty--;--------------------------------------------
 #ifndef ETUDIANTS_TP
 void Lock::Release()
 {
