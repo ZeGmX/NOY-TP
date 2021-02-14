@@ -1,6 +1,5 @@
-/* test_semaphore.c
- *
- *
+/* test_lock.c
+ * Simple program to check if our lock implementation works correctly
  */
 
 // Nachos system calls
@@ -17,39 +16,38 @@ LockId mutex;
 
 void fill() {
   int item = 0;
+  int i;
   while (true) {
     LockAcquire(mutex);
-//    n_printf("Filling with item %d\n", item);
-    int i;
     for (i = 0 ; i < SIZE ; i++) buff[i] = item;
+    n_printf("Array is filled with item %d\n", item);
     LockRelease(mutex);
-//    n_printf("Done\n");
     item++;
   }
 }
 
 void check() {
+  int item;
+  int i;
   while (true) {
-    n_printf("helloo\n");
-    int item = buff[0];
-    int i;
     LockAcquire(mutex);
+    item = buff[0];
     for (i = 0 ; i < SIZE ; i++) {
       if (buff[i] != item) {
-        n_printf("Error using lock, got items %d and %d\n", item, buff[i]);
-        break;
+        n_printf("Error: array contains %d instead of %d at index %d\n",
+                 buff[i], item, i);
+        Halt();
       }
     }
+    n_printf("Checked array is filled with item %d\n", item);
     LockRelease(mutex);
-    if (i == SIZE) n_printf("Successfully filled with item: %d\n", item);
   }
 }
 
 int main() {
+  mutex = LockCreate("lockMutexTestLock");
   ThreadId id_filler = threadCreate("filler", &fill);
   ThreadId id_checker = threadCreate("checker", &check);
-
-  n_printf("Filler id: %d, Checker id: %d\n", id_filler, id_checker);
 
   return 0;
 }
