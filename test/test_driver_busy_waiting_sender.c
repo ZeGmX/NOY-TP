@@ -8,6 +8,16 @@
 #include "userlib/libnachos.h"
 
 
+/*
+ * TODO:
+ * - Never put two "send" without a "receive"
+ *  One may be overwriten by the other
+ *
+ * - Threads not ending
+ *
+ * - Counting of send/receive don't match
+ */
+
 int main() {
   char answer[128];
 
@@ -20,9 +30,10 @@ int main() {
   }
 
   TtySend("ACK");
-//  n_printf("Sending hello world\n");
-  TtySend("Hello world!");
-//  n_printf("Done sending\n");
+  int i;
+  for (i = 0 ; i < 1000 ; i++) {;}
+  int n = TtySend("Hello world hello world!");
+  n_printf("%d\n", n);
 
   return 0;
 }

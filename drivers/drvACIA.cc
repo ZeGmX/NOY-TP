@@ -35,7 +35,6 @@
   working mode and create the semaphore.
   */
 //-------------------------------------------------------------------------
-#define ETUDIANTS_TP
 #ifndef ETUDIANTS_TP
 DriverACIA::DriverACIA()
 {
