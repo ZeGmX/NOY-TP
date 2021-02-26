@@ -35,6 +35,7 @@
   working mode and create the semaphore.
   */
 //-------------------------------------------------------------------------
+#define ETUDIANTS_TP
 #ifndef ETUDIANTS_TP
 DriverACIA::DriverACIA()
 {
@@ -93,7 +94,7 @@ int DriverACIA::TtySend(char *buff)
     int i = -1;
 
     do {
-      while (!g_machine->acia->GetChar()) {;}
+      while (g_machine->acia->GetOutputStateReg() == FULL) {;}
       i++;
       g_machine->acia->PutChar(buff[i]);
     } while (buff[i] != '\0');
@@ -143,8 +144,8 @@ int DriverACIA::TtyReceive(char *buff, int lg)
     int i = 0;
 
     do {
-      while (g_machine->acia->GetChar()) {;}
-      g_machine->acia->PutChar(buff[i]);
+      while (g_machine->acia->GetInputStateReg() == EMPTY) {;}
+      buff[i] = g_machine->acia->GetChar();
       i++;
     } while (i < lg && buff[i - 1] != '\0');
       buff[i - 1] = '\0';
