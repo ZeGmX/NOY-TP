@@ -45,10 +45,11 @@ DriverACIA::DriverACIA()
 #ifdef ETUDIANTS_TP
 DriverACIA::DriverACIA()
 {
-  g_machine->acia->SetWorkingMode(BUSY_WAITING);
-
-  switch(g_cfg->ACIA) {
+  switch(g_cfg->ACIA) {  // Actions depending on the ACIA mode
   case ACIA_BUSY_WAITING: {
+    DEBUG('d', (char*)"Creating the ACIA driver with mode BusyWaiting\n");
+
+    g_machine->acia->SetWorkingMode(BUSY_WAITING);
 
     // Mutex to protect the emission/reception functions
     send_sema = new Semaphore((char*)"DriverAcia_send_sema", 1);
@@ -56,7 +57,14 @@ DriverACIA::DriverACIA()
     break;
   }
   case ACIA_INTERRUPT: {
+    DEBUG('d', (char*)"Creating the ACIA driver with mode Interrupt\n");
+
+    // At first we accept both interruptions
+    g_machine->acia->SetWorkingMode(SEND_INTERRUPT | REC_INTERRUPT);
+
+    // We can already send a string
     send_sema = new Semaphore((char*)"DriverAcia_send_sema", 1);
+    // But we can't receive one until something has been sent
     receive_sema = new Semaphore((char*)"DriverAcia_receive_sema", 0);
 
     ind_rec = 0;
@@ -87,13 +95,18 @@ int DriverACIA::TtySend(char *buff)
 #ifdef ETUDIANTS_TP
 int DriverACIA::TtySend(char *buff)
 {
-  switch (g_cfg->ACIA) {
-  case ACIA_BUSY_WAITING: {
-    send_sema->P();
+  DEBUG('d', (char*)"Call to TtySend\n");
+
+  send_sema->P();
+
+  switch (g_machine->acia->GetWorkingMode()) { // Actions depending on the current ACIA mode
+  case BUSY_WAITING: {
     int i = -1;
 
     do {
+      // We wait for the last character to be sent so that we can put a new one
       while (g_machine->acia->GetOutputStateReg() == FULL) {;}
+
       i++;
       g_machine->acia->PutChar(buff[i]);
     } while (buff[i] != '\0');
@@ -102,16 +115,15 @@ int DriverACIA::TtySend(char *buff)
 
     return i + 1;
   }
-  case ACIA_INTERRUPT: {
-    send_sema->P();
+  case REC_INTERRUPT | SEND_INTERRUPT: {
+    // We copy the buffer into send_buffer (to be used in the interruption routine
     for (int i = 0 ; i < strlen(buff) + 1 ; i++)
       send_buffer[i] = buff[i];
 
     ind_send = 0;
-
-    g_machine->acia->SetWorkingMode(SEND_INTERRUPT);
-//    while (g_machine->acia->GetOutputStateReg() != EMPTY) {;}
+    // We put the first character, which will raise the exception and call the routine
     g_machine->acia->PutChar(buff[0]);
+    ind_send = 1;
 
     return strlen(buff) + 1;
   }
@@ -137,36 +149,43 @@ int DriverACIA::TtyReceive(char *buff, int lg)
 #ifdef ETUDIANTS_TP
 int DriverACIA::TtyReceive(char *buff, int lg)
 {
-  switch (g_cfg->ACIA) {
-  case ACIA_BUSY_WAITING: {
-    receive_sema->P();
+  DEBUG('d', (char*)"Call to TtyReceive\n");
+
+  receive_sema->P();
+
+  switch (g_machine->acia->GetWorkingMode()) {  // Actions depending on the current ACIA mode
+  case BUSY_WAITING: {
     int i = 0;
 
     do {
+      // We wait for a character to be received
       while (g_machine->acia->GetInputStateReg() == EMPTY) {;}
+
+      // we copy it into the result string
       buff[i] = g_machine->acia->GetChar();
       i++;
     } while (i < lg && buff[i - 1] != '\0');
+
       buff[i - 1] = '\0';
 
     receive_sema->V();
 
     return i - 1;
   }
-  case ACIA_INTERRUPT: {
-    receive_sema->P();
-    int borne = std::min(lg, ind_rec);
+  case SEND_INTERRUPT: {
+    int bound = std::min(ind_rec + 1, lg);
 
-    for (int i = 0 ; i < borne ; i++)
+    // We copy the received buffer into the result string
+    for (int i = 0 ; i < bound ; i++)
       buff[i] = receive_buffer[i];
-    buff[borne - 1] = '\0';
+
+    buff[bound - 1] = '\0';
     ind_rec = 0;
 
-    g_machine->acia->SetWorkingMode(REC_INTERRUPT);
-//    while (g_machine->acia->GetOutputStateReg() != EMPTY) {;}
-    g_machine->acia->PutChar(buff[0]);
+    // Now that the buffer has been processed, we can receive a new string
+    g_machine->acia->SetWorkingMode(REC_INTERRUPT | SEND_INTERRUPT);
 
-    return borne;
+    return bound;
   }
   }
   return 0;
@@ -190,12 +209,15 @@ void DriverACIA::InterruptSend()
 #ifdef ETUDIANTS_TP
 void DriverACIA::InterruptSend()
 {
-  if (send_buffer[ind_send] != '\0') {
-    ind_send++;
+   // Interruption routine, called when a character is put into the output buffer
+
+  DEBUG('d', (char*)"Interruption routine - send\n");
+
+  if (send_buffer[ind_send - 1] != '\0') {
     g_machine->acia->PutChar(send_buffer[ind_send]);
+    ind_send++;
   }
-  else {
-    g_machine->acia->SetWorkingMode(BUSY_WAITING);
+  else { // Receiving the last character
     send_sema->V();
   }
 }
@@ -204,7 +226,7 @@ void DriverACIA::InterruptSend()
 //-------------------------------------------------------------------------
 // DriverACIA::Interrupt_receive()
 /*! Reception interrupt handler.
-  Used in the ACIA Interrupt mode only. Reveices a character through the ACIA. 
+  Used in the ACIA Interrupt mode only. Receives a character through the ACIA.
   Releases the receive_sema semaphore and disables reception 
   interrupts when the last character of the message is received 
   (character '\0').
@@ -220,12 +242,19 @@ void DriverACIA::InterruptReceive()
 #ifdef ETUDIANTS_TP
 void DriverACIA::InterruptReceive()
 {
-  receive_buffer[ind_rec] = g_machine->acia->GetChar();
+  DEBUG('d', (char*)"Interruption routine - receive\n");
 
-  if (receive_buffer[ind_rec] == '\0') {
-    g_machine->acia->SetWorkingMode(BUSY_WAITING);
+  char character = g_machine->acia->GetChar();
+
+  if (character == '\0') {  // Receiving the last character of the sring
+    receive_buffer[ind_rec] = character;
+    // Blocking the interrupions until TtyReceive is called
+    g_machine->acia->SetWorkingMode(g_machine->acia->GetWorkingMode() ^ REC_INTERRUPT);
     receive_sema->V();
   }
-  ind_rec++;
+  else {
+    receive_buffer[ind_rec] = character;
+    ind_rec++;
+  }
 }
 #endif
