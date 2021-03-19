@@ -61,6 +61,8 @@ static void SwapELFSectionHeader(Elf32_Shdr *shdr);
  //   \param err: error code 0 if OK, -1 otherwise 
  */
 //----------------------------------------------------------------------
+#define ETUDIANTS_TP // TODO: remove this line
+#ifndef ETUDIANTS_TP
 AddrSpace::AddrSpace(OpenFile *exec_file, Process *p, int *err)
 {
   Elf32_Ehdr elfHdr; // Header du fichier ex�cutable
@@ -225,6 +227,174 @@ AddrSpace::AddrSpace(OpenFile *exec_file, Process *p, int *err)
   // Init the number of memory mapped files to zero
   nb_mapped_files = 0;
 }
+#endif
+#ifdef ETUDIANTS_TP
+AddrSpace::AddrSpace(OpenFile *exec_file, Process *p, int *err)
+{
+  Elf32_Ehdr elfHdr; // Header du fichier ex�cutable
+
+  *err = 0;
+  translationTable = NULL;
+  freePageId = 0;
+  process = p;
+
+  /* Empty user address space requested ? */
+  if (exec_file == NULL)
+  {
+    // Allocate translation table now
+    translationTable = new TranslationTable();
+    return;
+  }
+
+  // Read the header
+  exec_file->ReadAt((char *)&elfHdr, sizeof(elfHdr), 0);
+
+  // Check the file format
+  CheckELFHeader(&elfHdr, err);
+  printf("Check done \n");
+  ASSERT(*err == NO_ERROR);
+
+  printf("\n****  Loading file %s :\n", exec_file->GetName());
+
+  /* Retrived the contents of section table*/
+  Elf32_Shdr section_table[elfHdr.e_shnum * sizeof(elfHdr)];
+  exec_file->ReadAt((char *)section_table, elfHdr.e_shnum * sizeof(elfHdr),
+                    elfHdr.e_shoff);
+  /* Swap the section header */
+  int i;
+  for (i = 0; i < elfHdr.e_shnum; i++)
+    SwapELFSectionHeader(&section_table[i]);
+
+  /* Retrieve the section containing section names */
+  Elf32_Shdr *shname_section = &section_table[elfHdr.e_shstrndx];
+  char *shnames = new char[shname_section->sh_size];
+  exec_file->ReadAt(shnames, shname_section->sh_size,
+                    shname_section->sh_offset);
+
+  // Create an empty translation table
+  translationTable = new TranslationTable();
+
+  // Compute the highest virtual address to init the translation table
+  int mem_topaddr = 0;
+  for (i = 0; i < elfHdr.e_shnum; i++)
+  {
+    // Ignore empty sections
+    if (section_table[i].sh_size <= 0)
+      continue;
+    int section_topaddr = section_table[i].sh_addr + section_table[i].sh_size;
+    if ((section_table[i].sh_flags & SHF_ALLOC) && (section_topaddr > mem_topaddr))
+      mem_topaddr = section_topaddr;
+  }
+
+  // Allocate space in virtual memory
+  int base_addr = this->Alloc(divRoundUp(mem_topaddr, g_cfg->PageSize));
+  // Make sure this region really starts at virtual address 0
+  ASSERT(base_addr == 0);
+
+  DEBUG('a', (char *)"Allocated virtual area [0x0,0x%x[ for program\n",
+        mem_topaddr);
+
+  // Loading of all sections
+  for (i = 0; i < elfHdr.e_shnum; i++)
+  {
+    // Retrieve the section name
+    const char *section_name = shnames + section_table[i].sh_name;
+
+    DEBUG('a', (char *)"Section %d : size=0x%x name=\"%s\"\n",
+          i, section_table[i].sh_size, section_name);
+
+    // Ignore empty sections
+    if (section_table[i].sh_size <= 0)
+      continue;
+
+    // Look if this section has to be loaded (SHF_ALLOC flag)
+    if (!(section_table[i].sh_flags & SHF_ALLOC))
+      continue;
+
+    printf("\t- Section %s : file offset 0x%x, size 0x%x, addr 0x%x, %s%s\n",
+           section_name,
+           (unsigned)section_table[i].sh_offset,
+           (unsigned)section_table[i].sh_size,
+           (unsigned)section_table[i].sh_addr,
+           (section_table[i].sh_flags & SHF_WRITE) ? "R/W" : "R",
+           (section_table[i].sh_flags & SHF_EXECINSTR) ? "/X" : "");
+
+    // Make sure section is aligned on page boundary
+    ASSERT((section_table[i].sh_addr % g_cfg->PageSize) == 0);
+
+    // Initializes the page table entries and loads the section
+    // in memory (demand paging will be implemented later on)
+    for (unsigned int pgdisk = 0,
+                      virt_page = section_table[i].sh_addr / g_cfg->PageSize;
+         pgdisk < divRoundUp(section_table[i].sh_size, g_cfg->PageSize);
+         pgdisk++, virt_page++)
+    {
+
+      /* Without demand paging */
+
+      // Set up default values for the page table entry
+      translationTable->clearBitSwap(virt_page);
+      translationTable->setBitReadAllowed(virt_page);
+      if (section_table[i].sh_flags & SHF_WRITE)
+        translationTable->setBitWriteAllowed(virt_page);
+      else
+        translationTable->clearBitWriteAllowed(virt_page);
+      translationTable->clearBitIo(virt_page);
+
+      // Get a page in physical memory, halt of there is not sufficient space
+      int pp = g_physical_mem_manager->FindFreePage();
+      if (pp == -1)
+      {
+        printf("Not enough free space to load program %s\n",
+               exec_file->GetName());
+        g_machine->interrupt->Halt(-1);
+      }
+      g_physical_mem_manager->tpr[pp].virtualPage = virt_page;
+      g_physical_mem_manager->tpr[pp].owner = this;
+      g_physical_mem_manager->tpr[pp].locked = true;
+      translationTable->setPhysicalPage(virt_page, pp);
+
+      // The SHT_NOBITS flag indicates if the section has an image
+      // in the executable file (text or data section) or not
+      // (bss section)
+      if (section_table[i].sh_type != SHT_NOBITS)
+      {
+        // The section has an image in the executable file
+        // Read it from the disk
+        exec_file->ReadAt((char *)&(g_machine->mainMemory[translationTable->getPhysicalPage(virt_page) * g_cfg->PageSize]),
+                          g_cfg->PageSize, section_table[i].sh_offset + pgdisk * g_cfg->PageSize);
+      }
+      else
+      {
+        // The section does not have an image in the executable
+        // Fill it with zeroes
+        memset(&(g_machine->mainMemory[translationTable->getPhysicalPage(virt_page) * g_cfg->PageSize]),
+               0, g_cfg->PageSize);
+      }
+
+      // The page has been loded in physical memory but
+      // later-on will be saved in the swap disk. We have to indicate this
+      // in the translation table
+      translationTable->setAddrDisk(virt_page, -1);
+      // TODO: change this?
+
+      // The entry is not valid
+      translationTable->clearBitValid(virt_page);
+
+      /* End of code without demand paging */
+    }
+  }
+  delete[] shnames;
+
+  // Get program start address
+  CodeStartAddress = (int32_t)elfHdr.e_entry;
+  printf("\t- Program start address : 0x%lx\n\n",
+         (unsigned long)CodeStartAddress);
+
+  // Init the number of memory mapped files to zero
+  nb_mapped_files = 0;
+}
+#endif
 
 //----------------------------------------------------------------------
 /**   Deallocates an address space and in particular frees
@@ -268,6 +438,7 @@ AddrSpace::~AddrSpace()
  *      \return stack pointer (at the end of the allocated stack)
  */
 //----------------------------------------------------------------------
+#ifndef ETUDIANTS_TP
 int AddrSpace::StackAllocate(void)
 {
   // Optional : leave an anmapped blank space below the stack to
@@ -324,6 +495,65 @@ int AddrSpace::StackAllocate(void)
   int stackpointer = (stackBasePage + numPages) * g_cfg->PageSize - 4 * sizeof(int);
   return stackpointer;
 }
+#endif
+#ifdef ETUDIANTS_TP
+int AddrSpace::StackAllocate(void)
+{
+  // Optional : leave an anmapped blank space below the stack to
+  // detect stack overflows
+#define STACK_BLANK_LEN 4 // in pages
+  int blankaddr = this->Alloc(STACK_BLANK_LEN);
+  DEBUG('a', (char *)"Allocated unmapped virtual area [0x%x,0x%x[ for stack overflow detection\n",
+        blankaddr * g_cfg->PageSize, (blankaddr + STACK_BLANK_LEN) * g_cfg->PageSize);
+
+  // The new stack parameters
+  int stackBasePage, numPages;
+  numPages = divRoundUp(g_cfg->UserStackSize, g_cfg->PageSize);
+
+  // Allocate virtual space for the new stack
+  stackBasePage = this->Alloc(numPages);
+  ASSERT(stackBasePage >= 0);
+  // Print address range for stack even in non debug mode to help debugging
+  // in case of stack overflow
+  printf("****  Stack: allocated virtual area [0x%x,0x%x[ for thread\n",
+         stackBasePage * g_cfg->PageSize,
+         (stackBasePage + numPages) * g_cfg->PageSize);
+  DEBUG('a', (char *)"Allocated virtual area [0x%x,0x%x[ for stack\n",
+        stackBasePage * g_cfg->PageSize,
+        (stackBasePage + numPages) * g_cfg->PageSize);
+
+  for (int i = stackBasePage; i < (stackBasePage + numPages); i++)
+  {
+    /* Without demand paging */
+
+    // Allocate a new physical page for the stack, halt if not page availabke
+    int pp = g_physical_mem_manager->FindFreePage();
+    if (pp == -1)
+    {
+      printf("Not enough free space to load stack\n");
+      g_machine->interrupt->Halt(-1);
+    }
+    g_physical_mem_manager->tpr[pp].virtualPage = i;
+    g_physical_mem_manager->tpr[pp].owner = this;
+    g_physical_mem_manager->tpr[pp].locked = true;
+    translationTable->setPhysicalPage(i, pp);
+
+    // Fill the page with zeroes
+    memset(&(g_machine->mainMemory[translationTable->getPhysicalPage(i) * g_cfg->PageSize]),
+           0x0, g_cfg->PageSize);
+    translationTable->setAddrDisk(i, -1); //TODO: change this
+    translationTable->clearBitValid(i);
+    translationTable->clearBitSwap(i);
+    translationTable->setBitReadAllowed(i);
+    translationTable->setBitWriteAllowed(i);
+    translationTable->clearBitIo(i);
+    /* End of code without demand paging */
+  }
+
+  int stackpointer = (stackBasePage + numPages) * g_cfg->PageSize - 4 * sizeof(int);
+  return stackpointer;
+}
+#endif
 
 //----------------------------------------------------------------------
 /**  Allocate numPages virtual pages in the current address space

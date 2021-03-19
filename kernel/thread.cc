@@ -431,6 +431,7 @@ void Thread::SaveProcessorState()
 
 void Thread::RestoreProcessorState()
 {
+  g_machine->mmu->translationTable = GetProcessOwner()->addrspace->translationTable;
   for (int i = 0 ; i < NUM_INT_REGS ; i++) {
       g_machine->WriteIntRegister(i, thread_context.int_registers[i]);
   }
