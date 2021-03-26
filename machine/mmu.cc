@@ -212,7 +212,7 @@ MMU::Translate(uint32_t virtAddr, uint32_t *physAddr, int size, bool writing)
   // Compute virtual page number and offset in the page
   int vpn = virtAddr / g_cfg->PageSize;
   int offset = virtAddr % g_cfg->PageSize;
-
+  printf("vpn: %d, offset: %d, valid: %d, R: %d, W: %d\n", vpn, offset, translationTable->getBitValid(vpn), translationTable->getBitReadAllowed(vpn), translationTable->getBitWriteAllowed(vpn));
   /*
    * Complete the addres translation
    */

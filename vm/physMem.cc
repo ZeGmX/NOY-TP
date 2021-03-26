@@ -125,12 +125,48 @@ void PhysicalMemManager::ChangeOwner(long numPage, Thread *owner)
 //  \return A new physical page number.
 */
 //-----------------------------------------------------------------
+#define ETUDIANT_TP // TODO: remove this
+#ifndef ETUDIANT_TP
 int PhysicalMemManager::AddPhysicalToVirtualMapping(AddrSpace *owner, int virtualPage)
 {
   printf("**** Warning: function AddPhysicalToVirtualMapping is not implemented\n");
   exit(-1);
   return (0);
 }
+#endif
+#ifdef ETUDIANT_TP
+int PhysicalMemManager::AddPhysicalToVirtualMapping(AddrSpace *owner, int virtualPage)
+{
+  int pr = FindFreePage();
+  printf("IN APVM\n");
+  printf("pr: %d\n", pr);
+
+  if (pr != -1) {
+    tpr[pr].locked = true;
+  }
+  else {
+    pr = EvictPage();
+    tpr[pr].locked = true;
+
+    // the old owner doesn't have the page anymore
+    AddrSpace* old_owner = tpr[pr].owner;
+    int pv = tpr[pr].virtualPage;
+    old_owner->translationTable->clearBitValid(pv);
+    tpr[pr].owner = owner;
+
+    if (owner->translationTable->getBitM(virtualPage) == 1) {
+      char* phys_addr = ((char*)g_machine->mainMemory) + pr * g_cfg->PageSize;
+      int num_sector = g_swap_manager->PutPageSwap(-1, phys_addr);
+      old_owner->translationTable->setAddrDisk(pv, num_sector);
+      old_owner->translationTable->clearBitSwap(pv);
+
+      owner->translationTable->clearBitM(virtualPage);
+    }
+  }
+  printf("returned:%d\n", pr);
+  return pr;
+}
+#endif
 
 //-----------------------------------------------------------------
 // PhysicalMemManager::FindFreePage
@@ -173,12 +209,28 @@ int PhysicalMemManager::FindFreePage()
 //  \return A new free physical page number.
 */
 //-----------------------------------------------------------------
+#ifndef ETUDIANT_TP
 int PhysicalMemManager::EvictPage()
 {
   printf("**** Warning: page replacement algorithm is not implemented yet\n");
   exit(-1);
   return (0);
 }
+#endif
+#ifdef ETUDIANT_TP
+int PhysicalMemManager::EvictPage()
+{
+  int i = (i_clock + 1) % g_cfg->NumPhysPages;
+
+  while(tpr[i].owner->translationTable->getBitU(tpr[i].virtualPage) || ! tpr[i].locked) {
+    tpr[i].owner->translationTable->clearBitU(tpr[i].virtualPage);
+    i = (i + 1) % g_cfg->NumPhysPages;
+  }
+
+  i_clock = i;
+  return i;
+}
+#endif
 
 //-----------------------------------------------------------------
 // PhysicalMemManager::Print

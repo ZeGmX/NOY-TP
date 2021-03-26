@@ -58,6 +58,7 @@ ExceptionType PageFaultManager::PageFault(uint32_t virtualPage)
   // virtual page table
   TranslationTable* tpv = g_current_thread->GetProcessOwner()->addrspace->translationTable;
   int numPage = tpv->getAddrDisk(virtualPage);
+  printf("swap: %d, addrdisk: %d\n", tpv->getBitSwap(virtualPage), numPage);
 
   // Checking the swap bit to know the content
   if (tpv->getBitSwap(virtualPage) == 1) {  // The page is in swap
@@ -99,8 +100,8 @@ ExceptionType PageFaultManager::PageFault(uint32_t virtualPage)
 
     g_physical_mem_manager->UnlockPage(numPage_phys);
   }
-
-
+  tpv->setBitValid(virtualPage);
+  printf("end routine\n");
   return NO_EXCEPTION;
 }
 #endif

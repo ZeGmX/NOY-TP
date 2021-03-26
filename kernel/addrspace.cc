@@ -342,7 +342,7 @@ AddrSpace::AddrSpace(OpenFile *exec_file, Process *p, int *err)
       translationTable->clearBitIo(virt_page);
 
       // Get a page in physical memory, halt of there is not sufficient space
-      int pp = g_physical_mem_manager->FindFreePage();
+      /*int pp = g_physical_mem_manager->FindFreePage();
       if (pp == -1)
       {
         printf("Not enough free space to load program %s\n",
@@ -352,7 +352,7 @@ AddrSpace::AddrSpace(OpenFile *exec_file, Process *p, int *err)
       g_physical_mem_manager->tpr[pp].virtualPage = virt_page;
       g_physical_mem_manager->tpr[pp].owner = this;
       g_physical_mem_manager->tpr[pp].locked = true;
-      translationTable->setPhysicalPage(virt_page, pp);
+      translationTable->setPhysicalPage(virt_page, pp);*/
 
       // The SHT_NOBITS flag indicates if the section has an image
       // in the executable file (text or data section) or not
@@ -363,6 +363,7 @@ AddrSpace::AddrSpace(OpenFile *exec_file, Process *p, int *err)
         // Read it from the disk
         exec_file->ReadAt((char *)&(g_machine->mainMemory[translationTable->getPhysicalPage(virt_page) * g_cfg->PageSize]),
                           g_cfg->PageSize, section_table[i].sh_offset + pgdisk * g_cfg->PageSize);
+        translationTable->setAddrDisk(virt_page, -1);
       }
       else
       {
@@ -370,12 +371,13 @@ AddrSpace::AddrSpace(OpenFile *exec_file, Process *p, int *err)
         // Fill it with zeroes
         memset(&(g_machine->mainMemory[translationTable->getPhysicalPage(virt_page) * g_cfg->PageSize]),
                0, g_cfg->PageSize);
+        translationTable->setAddrDisk(virt_page, section_table[i].sh_offset + pgdisk * g_cfg->PageSize);
       }
 
       // The page has been loded in physical memory but
       // later-on will be saved in the swap disk. We have to indicate this
       // in the translation table
-      translationTable->setAddrDisk(virt_page, -1);
+      //translationTable->setAddrDisk(virt_page, -1);
       // TODO: change this?
 
       // The entry is not valid
@@ -522,12 +524,13 @@ int AddrSpace::StackAllocate(void)
         stackBasePage * g_cfg->PageSize,
         (stackBasePage + numPages) * g_cfg->PageSize);
 
+  printf("Addrspace bounds: %d %d\n", stackBasePage, stackBasePage + numPages);
   for (int i = stackBasePage; i < (stackBasePage + numPages); i++)
   {
     /* Without demand paging */
 
     // Allocate a new physical page for the stack, halt if not page availabke
-    int pp = g_physical_mem_manager->FindFreePage();
+    /*int pp = g_physical_mem_manager->FindFreePage();
     if (pp == -1)
     {
       printf("Not enough free space to load stack\n");
@@ -536,12 +539,12 @@ int AddrSpace::StackAllocate(void)
     g_physical_mem_manager->tpr[pp].virtualPage = i;
     g_physical_mem_manager->tpr[pp].owner = this;
     g_physical_mem_manager->tpr[pp].locked = true;
-    translationTable->setPhysicalPage(i, pp);
+    translationTable->setPhysicalPage(i, pp);*/
 
     // Fill the page with zeroes
     memset(&(g_machine->mainMemory[translationTable->getPhysicalPage(i) * g_cfg->PageSize]),
            0x0, g_cfg->PageSize);
-    translationTable->setAddrDisk(i, -1); //TODO: change this
+    translationTable->setAddrDisk(i, -1);
     translationTable->clearBitValid(i);
     translationTable->clearBitSwap(i);
     translationTable->setBitReadAllowed(i);
