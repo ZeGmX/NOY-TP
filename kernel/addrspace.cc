@@ -361,17 +361,18 @@ AddrSpace::AddrSpace(OpenFile *exec_file, Process *p, int *err)
       {
         // The section has an image in the executable file
         // Read it from the disk
-        exec_file->ReadAt((char *)&(g_machine->mainMemory[translationTable->getPhysicalPage(virt_page) * g_cfg->PageSize]),
-                          g_cfg->PageSize, section_table[i].sh_offset + pgdisk * g_cfg->PageSize);
-        translationTable->setAddrDisk(virt_page, -1);
+        /*exec_file->ReadAt((char *)&(g_machine->mainMemory[translationTable->getPhysicalPage(virt_page) * g_cfg->PageSize]),
+                          g_cfg->PageSize, section_table[i].sh_offset + pgdisk * g_cfg->PageSize);*/
+        translationTable->setAddrDisk(virt_page, section_table[i].sh_offset + pgdisk * g_cfg->PageSize);
       }
       else
       {
         // The section does not have an image in the executable
         // Fill it with zeroes
-        memset(&(g_machine->mainMemory[translationTable->getPhysicalPage(virt_page) * g_cfg->PageSize]),
-               0, g_cfg->PageSize);
-        translationTable->setAddrDisk(virt_page, section_table[i].sh_offset + pgdisk * g_cfg->PageSize);
+        /*memset(&(g_machine->mainMemory[translationTable->getPhysicalPage(virt_page) * g_cfg->PageSize]),
+               0, g_cfg->PageSize);*/
+//        translationTable->setAddrDisk(virt_page, section_table[i].sh_offset + pgdisk * g_cfg->PageSize);
+        translationTable->setAddrDisk(virt_page, -1);
       }
 
       // The page has been loded in physical memory but
