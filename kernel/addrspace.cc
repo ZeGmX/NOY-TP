@@ -61,7 +61,6 @@ static void SwapELFSectionHeader(Elf32_Shdr *shdr);
  //   \param err: error code 0 if OK, -1 otherwise 
  */
 //----------------------------------------------------------------------
-#define ETUDIANTS_TP // TODO: remove this line
 #ifndef ETUDIANTS_TP
 AddrSpace::AddrSpace(OpenFile *exec_file, Process *p, int *err)
 {
@@ -330,8 +329,6 @@ AddrSpace::AddrSpace(OpenFile *exec_file, Process *p, int *err)
          pgdisk++, virt_page++)
     {
 
-      /* Without demand paging */
-
       // Set up default values for the page table entry
       translationTable->clearBitSwap(virt_page);
       translationTable->setBitReadAllowed(virt_page);
@@ -341,50 +338,22 @@ AddrSpace::AddrSpace(OpenFile *exec_file, Process *p, int *err)
         translationTable->clearBitWriteAllowed(virt_page);
       translationTable->clearBitIo(virt_page);
 
-      // Get a page in physical memory, halt of there is not sufficient space
-      /*int pp = g_physical_mem_manager->FindFreePage();
-      if (pp == -1)
-      {
-        printf("Not enough free space to load program %s\n",
-               exec_file->GetName());
-        g_machine->interrupt->Halt(-1);
-      }
-      g_physical_mem_manager->tpr[pp].virtualPage = virt_page;
-      g_physical_mem_manager->tpr[pp].owner = this;
-      g_physical_mem_manager->tpr[pp].locked = true;
-      translationTable->setPhysicalPage(virt_page, pp);*/
-
       // The SHT_NOBITS flag indicates if the section has an image
       // in the executable file (text or data section) or not
       // (bss section)
       if (section_table[i].sh_type != SHT_NOBITS)
       {
         // The section has an image in the executable file
-        // Read it from the disk
-        /*exec_file->ReadAt((char *)&(g_machine->mainMemory[translationTable->getPhysicalPage(virt_page) * g_cfg->PageSize]),
-                          g_cfg->PageSize, section_table[i].sh_offset + pgdisk * g_cfg->PageSize);*/
         translationTable->setAddrDisk(virt_page, section_table[i].sh_offset + pgdisk * g_cfg->PageSize);
       }
       else
       {
         // The section does not have an image in the executable
-        // Fill it with zeroes
-        /*memset(&(g_machine->mainMemory[translationTable->getPhysicalPage(virt_page) * g_cfg->PageSize]),
-               0, g_cfg->PageSize);*/
-//        translationTable->setAddrDisk(virt_page, section_table[i].sh_offset + pgdisk * g_cfg->PageSize);
         translationTable->setAddrDisk(virt_page, -1);
       }
 
-      // The page has been loded in physical memory but
-      // later-on will be saved in the swap disk. We have to indicate this
-      // in the translation table
-      //translationTable->setAddrDisk(virt_page, -1);
-      // TODO: change this?
-
       // The entry is not valid
       translationTable->clearBitValid(virt_page);
-
-      /* End of code without demand paging */
     }
   }
   delete[] shnames;
@@ -528,20 +497,6 @@ int AddrSpace::StackAllocate(void)
   printf("Addrspace bounds: %d %d\n", stackBasePage, stackBasePage + numPages);
   for (int i = stackBasePage; i < (stackBasePage + numPages); i++)
   {
-    /* Without demand paging */
-
-    // Allocate a new physical page for the stack, halt if not page availabke
-    /*int pp = g_physical_mem_manager->FindFreePage();
-    if (pp == -1)
-    {
-      printf("Not enough free space to load stack\n");
-      g_machine->interrupt->Halt(-1);
-    }
-    g_physical_mem_manager->tpr[pp].virtualPage = i;
-    g_physical_mem_manager->tpr[pp].owner = this;
-    g_physical_mem_manager->tpr[pp].locked = true;
-    translationTable->setPhysicalPage(i, pp);*/
-
     // Fill the page with zeroes
     memset(&(g_machine->mainMemory[translationTable->getPhysicalPage(i) * g_cfg->PageSize]),
            0x0, g_cfg->PageSize);
@@ -551,7 +506,6 @@ int AddrSpace::StackAllocate(void)
     translationTable->setBitReadAllowed(i);
     translationTable->setBitWriteAllowed(i);
     translationTable->clearBitIo(i);
-    /* End of code without demand paging */
   }
 
   int stackpointer = (stackBasePage + numPages) * g_cfg->PageSize - 4 * sizeof(int);

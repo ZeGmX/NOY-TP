@@ -125,8 +125,7 @@ void PhysicalMemManager::ChangeOwner(long numPage, Thread *owner)
 //  \return A new physical page number.
 */
 //-----------------------------------------------------------------
-#define ETUDIANT_TP // TODO: remove this
-#ifndef ETUDIANT_TP
+#ifndef ETUDIANTS_TP
 int PhysicalMemManager::AddPhysicalToVirtualMapping(AddrSpace *owner, int virtualPage)
 {
   printf("**** Warning: function AddPhysicalToVirtualMapping is not implemented\n");
@@ -134,36 +133,40 @@ int PhysicalMemManager::AddPhysicalToVirtualMapping(AddrSpace *owner, int virtua
   return (0);
 }
 #endif
-#ifdef ETUDIANT_TP
+#ifdef ETUDIANTS_TP
 int PhysicalMemManager::AddPhysicalToVirtualMapping(AddrSpace *owner, int virtualPage)
 {
   int pr = FindFreePage();
-  printf("IN APVM\n");
-  printf("pr: %d\n", pr);
-
+  // Free page found
   if (pr != -1) {
     tpr[pr].locked = true;
   }
+
+  // No free page found, needs to evict one
   else {
     pr = EvictPage();
+
     tpr[pr].locked = true;
 
     // the old owner doesn't have the page anymore
     AddrSpace* old_owner = tpr[pr].owner;
-    int pv = tpr[pr].virtualPage;
-    old_owner->translationTable->clearBitValid(pv);
+
+    int old_pv = tpr[pr].virtualPage;
+    old_owner->translationTable->clearBitValid(old_pv);
     tpr[pr].owner = owner;
 
+    // Page modified, needs to be copied
     if (owner->translationTable->getBitM(virtualPage) == 1) {
       char* phys_addr = ((char*)g_machine->mainMemory) + pr * g_cfg->PageSize;
       int num_sector = g_swap_manager->PutPageSwap(-1, phys_addr);
-      old_owner->translationTable->setAddrDisk(pv, num_sector);
-      old_owner->translationTable->clearBitSwap(pv);
+      old_owner->translationTable->setAddrDisk(old_pv, num_sector);
+      old_owner->translationTable->clearBitSwap(old_pv);
 
       owner->translationTable->clearBitM(virtualPage);
     }
   }
-  printf("returned:%d\n", pr);
+  DEBUG('v', (char*)"Linking virtual page %d to physical page %d\n", virtualPage, pr);
+  tpr[pr].owner = owner;
   return pr;
 }
 #endif
@@ -209,7 +212,7 @@ int PhysicalMemManager::FindFreePage()
 //  \return A new free physical page number.
 */
 //-----------------------------------------------------------------
-#ifndef ETUDIANT_TP
+#ifndef ETUDIANTS_TP
 int PhysicalMemManager::EvictPage()
 {
   printf("**** Warning: page replacement algorithm is not implemented yet\n");
@@ -217,12 +220,13 @@ int PhysicalMemManager::EvictPage()
   return (0);
 }
 #endif
-#ifdef ETUDIANT_TP
+#ifdef ETUDIANTS_TP
 int PhysicalMemManager::EvictPage()
 {
   int i = (i_clock + 1) % g_cfg->NumPhysPages;
 
-  while(tpr[i].owner->translationTable->getBitU(tpr[i].virtualPage) || ! tpr[i].locked) {
+  while(tpr[i].owner->translationTable->getBitU(tpr[i].virtualPage) || tpr[i].locked) {
+    printf("i: %d, locked: %d, u: %d\n", i, tpr[i].locked, tpr[i].owner->translationTable->getBitU(tpr[i].virtualPage));
     tpr[i].owner->translationTable->clearBitU(tpr[i].virtualPage);
     i = (i + 1) % g_cfg->NumPhysPages;
   }

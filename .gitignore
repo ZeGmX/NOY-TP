@@ -15,6 +15,11 @@ test/shell
 test/sort
 test/test_lock
 test/test_semaphore
+test/test
+test/test_data_overflow
+test/test_driver_receiver
+test/test_driver_sender
+test/test_cond_var
 DISK
 SWAPDISK
 doxygen.cfg

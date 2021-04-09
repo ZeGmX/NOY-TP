@@ -51,61 +51,49 @@ ExceptionType PageFaultManager::PageFault(uint32_t virtualPage)
 }
 #endif
 #ifdef ETUDIANTS_TP
-// TODO: deal with read/write rights
 ExceptionType PageFaultManager::PageFault(uint32_t virtualPage)
 {
-  printf("IN THE PAGE FAULT ROUTINE\n");
   // virtual page table
   TranslationTable* tpv = g_current_thread->GetProcessOwner()->addrspace->translationTable;
   int addrdisk = tpv->getAddrDisk(virtualPage);
-  printf("swap: %d, addrdisk: %d\n", tpv->getBitSwap(virtualPage), addrdisk);
+
+  // Will be set in each branch
+  int numPage_phys;
+  char tempPage[g_cfg->PageSize];
+
+  DEBUG('v', (char*)"In PageFaultManager with swap: %d, addrdisk: %d\n", tpv->getBitSwap(virtualPage), addrdisk);
+
+  if (!tpv->getBitReadAllowed(virtualPage)) return PAGEFAULT_EXCEPTION;
 
   // Checking the swap bit to know the content
   if (tpv->getBitSwap(virtualPage) == 1) {  // The page is in swap
+    if (!tpv->getBitWriteAllowed(virtualPage)) return READONLY_EXCEPTION;
 
     // page being used by the replacement algorithm
     while (addrdisk == -1) addrdisk = tpv->getAddrDisk(virtualPage);
 
-    // Loading the page into a temporary location
-    char tempPage[g_cfg->PageSize];
     g_swap_manager->GetPageSwap(addrdisk, tempPage);
-
-    int numPage_phys = g_physical_mem_manager->AddPhysicalToVirtualMapping(g_current_thread->GetProcessOwner()->addrspace, addrdisk);
-    int* phys_addr = ((int*)g_machine->mainMemory) + numPage_phys * g_cfg->PageSize;
-    memcpy(phys_addr, tempPage, g_cfg->PageSize);
-
-    g_physical_mem_manager->UnlockPage(numPage_phys);
   }
 
   else if (addrdisk == -1) {  // the page doesn't exist in memory, anonymous page
-    // Loading the page into a temporary location
-    char tempPage[g_cfg->PageSize];
+    if (!tpv->getBitWriteAllowed(virtualPage)) return READONLY_EXCEPTION;
+
     memset(tempPage, 0, g_cfg->PageSize); // filling the page with 0
-
-    int numPage_phys = g_physical_mem_manager->AddPhysicalToVirtualMapping(g_current_thread->GetProcessOwner()->addrspace, addrdisk);
-    int* phys_addr = ((int*)g_machine->mainMemory) + numPage_phys * g_cfg->PageSize;
-    memcpy(phys_addr, tempPage, g_cfg->PageSize);
-
-    g_physical_mem_manager->UnlockPage(numPage_phys);
   }
 
   else { // load the page in the executable
-    // Loading the page into a temporary location
-    char tempPage[g_cfg->PageSize];
     g_current_thread->GetProcessOwner()->exec_file->ReadAt(tempPage, g_cfg->PageSize, addrdisk);
-
-    int numPage_phys = g_physical_mem_manager->AddPhysicalToVirtualMapping(g_current_thread->GetProcessOwner()->addrspace, addrdisk);
-    int* phys_addr = (int*)(g_machine->mainMemory + numPage_phys * g_cfg->PageSize);
-
-    printf("phys_addr: 0x%x\n", phys_addr);
-
-
-    memcpy(phys_addr, tempPage, g_cfg->PageSize);
-
-    g_physical_mem_manager->UnlockPage(numPage_phys);
   }
+
+  // linking the virtual page to the physical page copying the content
+  numPage_phys = g_physical_mem_manager->AddPhysicalToVirtualMapping(g_current_thread->GetProcessOwner()->addrspace, virtualPage);
+  int* phys_addr = (int*)(g_machine->mainMemory + numPage_phys * g_cfg->PageSize);
+  memcpy(phys_addr, tempPage, g_cfg->PageSize);
+
+  g_physical_mem_manager->UnlockPage(numPage_phys);
+  tpv->setPhysicalPage(virtualPage, numPage_phys);
   tpv->setBitValid(virtualPage);
-  printf("end routine\n");
+
   return NO_EXCEPTION;
 }
 #endif
