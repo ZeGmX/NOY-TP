@@ -93,7 +93,7 @@ void Semaphore::P()
   value--;
   if (value < 0)
   {
-    DEBUG('s', (char*)"Processus blocked on semaphore %s\n", g_current_thread->GetName());
+    DEBUG('s', (char*)"Processus %s blocked on semaphore %s\n", g_current_thread->GetName(), getName());
     queue->Append(g_current_thread);
     g_current_thread->Sleep();
   }
@@ -122,14 +122,11 @@ void Semaphore::V()
   DEBUG('s', (char*)"Doing V on semaphore %s\n", getName());
   DEBUG('s', (char*)"Current counter value: %d\n", value);
   value++;
-  if (value >= 0)
+  if (!queue->IsEmpty())
   {
-    if (!queue->IsEmpty())
-    {
-      Thread *t = (Thread *)queue->Remove();
-      DEBUG('s', (char*)"Releasing thread %s\n", t->GetName());
-      g_scheduler->ReadyToRun(t);
-    }
+    Thread *t = (Thread *)queue->Remove();
+    DEBUG('s', (char*)"Releasing thread %s\n", t->GetName());
+    g_scheduler->ReadyToRun(t);
   }
   g_machine->interrupt->SetStatus(old);
 }
