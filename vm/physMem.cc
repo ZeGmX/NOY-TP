@@ -125,6 +125,7 @@ void PhysicalMemManager::ChangeOwner(long numPage, Thread *owner)
 //  \return A new physical page number.
 */
 //-----------------------------------------------------------------
+#define ETUDIANTS_TP //TODO: removs this line
 #ifndef ETUDIANTS_TP
 int PhysicalMemManager::AddPhysicalToVirtualMapping(AddrSpace *owner, int virtualPage)
 {
@@ -145,6 +146,7 @@ int PhysicalMemManager::AddPhysicalToVirtualMapping(AddrSpace *owner, int virtua
   // No free page found, needs to evict one
   else {
     pr = EvictPage();
+    printf("Evicting page %d\n", pr);
 
     tpr[pr].locked = true;
 
@@ -153,19 +155,29 @@ int PhysicalMemManager::AddPhysicalToVirtualMapping(AddrSpace *owner, int virtua
 
     int old_pv = tpr[pr].virtualPage;
     old_owner->translationTable->clearBitValid(old_pv);
-    tpr[pr].owner = owner;
 
     // Page modified, needs to be copied
     if (owner->translationTable->getBitM(virtualPage) == 1) {
       char* phys_addr = ((char*)g_machine->mainMemory) + pr * g_cfg->PageSize;
-      int num_sector = g_swap_manager->PutPageSwap(-1, phys_addr);
-      old_owner->translationTable->setAddrDisk(old_pv, num_sector);
-      old_owner->translationTable->clearBitSwap(old_pv);
+      int num_sector;
 
+      if (old_owner->translationTable->getBitSwap(old_pv)) {
+        printf("Page already on swap\n");
+        num_sector =  old_owner->translationTable->getAddrDisk(old_pv);
+        g_swap_manager->PutPageSwap(num_sector, phys_addr);
+      }
+      else {
+        printf("Going to swap\n");
+        num_sector = g_swap_manager->PutPageSwap(-1, phys_addr);
+      }
+      old_owner->translationTable->setAddrDisk(old_pv, num_sector);
+      old_owner->translationTable->setBitSwap(old_pv);
       owner->translationTable->clearBitM(virtualPage);
     }
   }
   DEBUG('v', (char*)"Linking virtual page %d to physical page %d\n", virtualPage, pr);
+
+  tpr[pr].virtualPage = virtualPage;
   tpr[pr].owner = owner;
   return pr;
 }
@@ -226,11 +238,9 @@ int PhysicalMemManager::EvictPage()
   int i = (i_clock + 1) % g_cfg->NumPhysPages;
 
   while(tpr[i].owner->translationTable->getBitU(tpr[i].virtualPage) || tpr[i].locked) {
-    printf("i: %d, locked: %d, u: %d\n", i, tpr[i].locked, tpr[i].owner->translationTable->getBitU(tpr[i].virtualPage));
     tpr[i].owner->translationTable->clearBitU(tpr[i].virtualPage);
     i = (i + 1) % g_cfg->NumPhysPages;
   }
-
   i_clock = i;
   return i;
 }
