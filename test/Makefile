@@ -5,7 +5,7 @@
 #
 # To add generate a new program, just update the PROGRAMS target below
 
-PROGRAMS = halt hello shell matmult sort test_semaphore test_lock test_cond_var test_driver_receiver test_driver_sender test_big_file test_mapped_files
+PROGRAMS = halt hello shell matmult sort test_semaphore test_lock test_cond_var test_driver_receiver test_driver_sender test_data_overflow test_big_file test_mapped_files
 
 all: $(PROGRAMS)
 
