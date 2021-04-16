@@ -41,7 +41,6 @@ PageFaultManager::~PageFaultManager()
 //        page mapped to something [code/data/bss/...])
 //	\return the exception (generally the NO_EXCEPTION constant)
 */
-#define ETUDIANTS_TP //TODO: remove this line
 #ifndef ETUDIANTS_TP
 ExceptionType PageFaultManager::PageFault(uint32_t virtualPage)
 {
@@ -90,9 +89,9 @@ ExceptionType PageFaultManager::PageFault(uint32_t virtualPage)
   int* phys_addr = (int*)(g_machine->mainMemory + numPage_phys * g_cfg->PageSize);
   memcpy(phys_addr, tempPage, g_cfg->PageSize);
 
-  g_physical_mem_manager->UnlockPage(numPage_phys);
   tpv->setPhysicalPage(virtualPage, numPage_phys);
   tpv->setBitValid(virtualPage);
+  g_physical_mem_manager->UnlockPage(numPage_phys);
 
   return NO_EXCEPTION;
 }

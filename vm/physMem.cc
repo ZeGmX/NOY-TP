@@ -125,7 +125,6 @@ void PhysicalMemManager::ChangeOwner(long numPage, Thread *owner)
 //  \return A new physical page number.
 */
 //-----------------------------------------------------------------
-#define ETUDIANTS_TP //TODO: removs this line
 #ifndef ETUDIANTS_TP
 int PhysicalMemManager::AddPhysicalToVirtualMapping(AddrSpace *owner, int virtualPage)
 {
@@ -146,7 +145,7 @@ int PhysicalMemManager::AddPhysicalToVirtualMapping(AddrSpace *owner, int virtua
   // No free page found, needs to evict one
   else {
     pr = EvictPage();
-    printf("Evicting page %d\n", pr);
+    DEBUG('v', "Evicting page %d\n", pr);
 
     tpr[pr].locked = true;
 
@@ -157,17 +156,16 @@ int PhysicalMemManager::AddPhysicalToVirtualMapping(AddrSpace *owner, int virtua
     old_owner->translationTable->clearBitValid(old_pv);
 
     // Page modified, needs to be copied
-    if (owner->translationTable->getBitM(virtualPage) == 1) {
+    if (owner->translationTable->getBitM(old_pv) == 1) {
+      DEBUG('v', (char*) "Putting physical page %d on swap\n", pr);
       char* phys_addr = ((char*)g_machine->mainMemory) + pr * g_cfg->PageSize;
       int num_sector;
 
       if (old_owner->translationTable->getBitSwap(old_pv)) {
-        printf("Page already on swap\n");
         num_sector =  old_owner->translationTable->getAddrDisk(old_pv);
         g_swap_manager->PutPageSwap(num_sector, phys_addr);
       }
       else {
-        printf("Going to swap\n");
         num_sector = g_swap_manager->PutPageSwap(-1, phys_addr);
       }
       old_owner->translationTable->setAddrDisk(old_pv, num_sector);
