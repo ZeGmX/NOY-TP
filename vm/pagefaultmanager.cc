@@ -81,7 +81,11 @@ ExceptionType PageFaultManager::PageFault(uint32_t virtualPage)
   }
 
   else { // load the page in the executable
-    g_current_thread->GetProcessOwner()->exec_file->ReadAt(tempPage, g_cfg->PageSize, addrdisk);
+    OpenFile* f = g_current_thread->GetProcessOwner()->addrspace->findMappedFile(virtualPage);
+    if (!f) {
+      f = g_current_thread->GetProcessOwner()->exec_file;
+    }
+    f->ReadAt(tempPage, g_cfg->PageSize, addrdisk);
   }
 
   // linking the virtual page to the physical page copying the content

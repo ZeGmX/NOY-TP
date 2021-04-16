@@ -549,11 +549,44 @@ int AddrSpace::Alloc(int numPages)
  * \return the virtual address at which the file is mapped
  */
 // ----------------------------------------------------------------------
+#ifndef ETUDIANTS_TP
 int AddrSpace::Mmap(OpenFile *f, int size)
 {
   printf("**** Warning: method AddrSpace::Mmap is not implemented yet\n");
   exit(-1);
 }
+#endif
+#ifdef ETUDIANTS_TP
+int AddrSpace::Mmap(OpenFile *f, int size)
+{
+  int nbPages = size / g_cfg->PageSize;
+
+  if (nb_mapped_files == MAX_MAPPED_FILES) {
+    return -1;
+  }
+
+  int pv = Alloc(nbPages);
+
+  if (pv == -1) {
+    return -1;
+  }
+
+  for (int shift = 0 ; shift < nbPages ; shift++) {
+    translationTable->setAddrDisk(pv + shift, shift * g_cfg->PageSize);
+    translationTable->clearBitValid(pv + shift);
+  }
+
+  // Adding the new mapped file to the list
+  s_mapped_file current_map;
+  current_map.file = f;
+  current_map.size = size;
+  current_map.first_address = pv;
+  mapped_files[nb_mapped_files] = current_map;
+  nb_mapped_files++;
+
+  return pv;
+}
+#endif
 
 //----------------------------------------------------------------------
 /*! Search if the address is in a memory-mapped file
@@ -562,11 +595,25 @@ int AddrSpace::Mmap(OpenFile *f, int size)
  * \return address of file descriptor if found, NULL otherwise
  */
 //----------------------------------------------------------------------
+#ifndef ETUDIANTS_TP
 OpenFile *AddrSpace::findMappedFile(int32_t addr)
 {
   printf("**** Warning: method AddrSpace::findMappedFile is not implemented yet\n");
   exit(-1);
 }
+#endif
+#ifdef ETUDIANTS_TP
+OpenFile *AddrSpace::findMappedFile(int32_t addr)
+{
+  for (int i = 0 ; i < nb_mapped_files ; i++) {
+    int nbPages = mapped_files[i].size / g_cfg->PageSize;
+    if (mapped_files[i].first_address <= addr && addr < mapped_files[i].first_address + nbPages) {
+      return  mapped_files[i].file;
+    }
+  }
+  return NULL;
+}
+#endif
 
 //----------------------------------------------------------------------
 // SwapELFHeader

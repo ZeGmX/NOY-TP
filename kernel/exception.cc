@@ -685,6 +685,21 @@ void ExceptionHandler(ExceptionType exceptiontype, int vaddr)
       }
       break;
     }
+      case SC_MMAP: {
+        DEBUG('e', (char *)"Exception: SC_MMAP\n");
+        int32_t fileId = g_machine->ReadIntRegister(4);
+        int32_t size = g_machine->ReadIntRegister(5);
+        OpenFile* f = (OpenFile*)g_object_ids->SearchObject(fileId);
+        if (f && f->type == FILE_TYPE) {
+          int addr = g_current_thread->GetProcessOwner()->addrspace->Mmap(f, size);
+          g_machine->WriteIntRegister(2, addr);
+        }
+        else {
+          g_machine->WriteIntRegister(2, INVALID_FILE_ID);
+        }
+        break;
+      }
+
 #endif
 		case SC_REMOVE:
 		{
